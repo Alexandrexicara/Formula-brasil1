@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: formula-brasil1-server
+    runtime: node
+    plan: free
+    region: ohio
+    branch: main
+    buildCommand: npm install
+    startCommand: npm run server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_ORIGIN
+        value: https://formula-brasil1.netlify.app
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000
