@@ -37,6 +37,8 @@ const dash=box(cockpit,new THREE.MeshStandardMaterial({color:0x06090e,emissive:0
 const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.48,-.25);car.add(cockpitCam);
 const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add(externalCam);
 let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1;
+// Posiciona o carro na linha de largada antes de abrir o treino.
+const initialPoint=curve.getPointAt(progress);const initialTangent=curve.getTangentAt(progress);car.position.set(initialPoint.x,.08,initialPoint.z);car.rotation.y=Math.atan2(-initialTangent.x,-initialTangent.z);
 const onlineStatus=document.querySelector('#onlineStatus');
 const serverUrl=import.meta.env.VITE_SERVER_URL;
 let socket=null,onlineRoom=null,authToken=localStorage.getItem('formulaBr1Token')||'',authMode='login';
