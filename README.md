@@ -1,53 +1,30 @@
 # Formula Brasil 1
 
-Jogo de corrida 3D para navegador, com Three.js e Vite. O frontend é publicado no Netlify; o serviço multiplayer fica preparado para hospedagem no Render.
+Jogo de corrida 3D para navegador. Frontend Three.js/Vite no Netlify, servidor Node.js/Socket.IO no Render e PostgreSQL no Neon.
 
-## Rodar o jogo localmente
+## Netlify
+Build: `npm install && npm run build`; publish: `dist`. Defina `VITE_SERVER_URL` com a URL HTTPS do Render.
 
-```bash
-npm install
-npm run dev
-```
+## Render
+Use o Blueprint `render.yaml`. Build: `npm install`; Start: `npm run server`; Health check: `/api/health`.
+Configure `DATABASE_URL` com a connection string Neon (pooler) e `JWT_SECRET` (gerado pelo Blueprint). `CLIENT_ORIGIN` deve conter `https://formula-brasil1.netlify.app`.
 
-## Build de produção
+## Neon
+Projeto `formula-brasil1`, banco `formula_br1`. Tabelas criadas: players, races, race_entries, player_stats e race_events.
 
-```bash
-npm run build
-npm run preview
-```
+## API
+- POST `/api/auth/register` — {username,email,password}
+- POST `/api/auth/login` — {login,password}
+- GET `/api/me` — Bearer token
+- GET `/api/leaderboard`
+- GET `/api/races/recent`
+- GET `/api/health`
 
-O Netlify usa `netlify.toml` para executar `npm run build` e publicar a pasta `dist`.
+## Multiplayer
+Socket.IO com autenticação JWT, salas com até 20 pilotos, largada após 30 segundos ou ao preencher o grid, corridas de 10 minutos e transmissão de estado entre participantes.
 
 ## Controles
+W/↑ acelera; S/↓ freia; A/D ou setas direcionam; C alterna cockpit/externa; Esc pausa.
 
-- W / seta para cima: acelerar
-- S / seta para baixo: frear
-- A/D ou setas esquerda/direita: direcionar
-- C: alternar cockpit e câmera externa
-- Esc: pausar
-
-## Multiplayer — preparação
-
-O diretório `server/` contém o servidor Node.js + Express + Socket.IO com fila de entrada, grids de até 20 vagas, evento de largada e corridas de 10 minutos.
-
-Para iniciar o servidor:
-
-```bash
-npm run server
-```
-
-No Render, configure:
-- Build command: `npm install`
-- Start command: `npm run server`
-- `CLIENT_ORIGIN=https://formula-brasil1.netlify.app`
-
-No Netlify, configure a variável `VITE_SERVER_URL` com a URL pública do serviço Render e faça um novo deploy.
-
-## O que ainda depende da configuração dos serviços
-
-- Publicar o servidor Socket.IO no Render e configurar a URL no Netlify.
-- Conectar Neon/PostgreSQL para contas, resultados e ranking persistentes.
-- Implementar autenticação, sincronização/interpolação visual completa dos adversários e validação de corrida no servidor.
-- Evoluir modelo 3D, física, áudio, danos e conteúdo das pistas.
-
-O modo de treino local não depende do Render. A interface do grid online já está preparada, mas o multiplayer real só ficará disponível depois que o servidor for publicado e conectado.
+## Pendências para ativação e conclusão
+Configurar variáveis do Render e Netlify, testar conexão real, conectar interface de cadastro/login, renderizar carros remotos no cliente, classificação e encerramento de resultados, física autoritativa, reconexão e testes de carga. Até esses testes, não considerar o multiplayer pronto.
