@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080b10" />
+  <title>Formula Brasil 1</title>
+</head>
+<body>
+  <div id="app">
+    <div id="loading">PREPARANDO O GRID…</div>
+    <div id="hud">
+      <header class="topbar"><strong>FORMULA <span>BRASIL 1</span></strong><div id="session">TREINO LIVRE · LAS VEGAS</div></header>
+      <section class="telemetry"><div><small>VELOCIDADE</small><b id="speed">0</b><small>KM/H</small></div><div><small>MARCHA</small><b id="gear">N</b></div><div><small>VOLTA</small><b id="lap">1/3</b></div><div><small>TEMPO</small><b id="clock">00:00.000</b></div></section>
+      <div class="rightHud"><div class="position">P<span id="position">1</span></div><div class="mapLabel">CIRCUITO LAS VEGAS</div><canvas id="minimap" width="150" height="100"></canvas></div>
+      <div class="bottomHud"><span id="cameraLabel">CÂMERA COCKPIT</span><span>W / ↑ ACELERAR</span><span>S / ↓ FREAR</span><span>A D / ← → VIRAR</span><span>C TROCAR CÂMERA</span></div>
+      <div id="startPanel"><div class="eyebrow">EXPERIÊNCIA DE PILOTAGEM 3D</div><h1>SINTA A<br><em>VELOCIDADE.</em></h1><p>Entre no cockpit e acelere no circuito noturno de Las Vegas.</p><button id="start">INICIAR CORRIDA</button><small>WASD ou setas · C alterna câmeras · ESC pausa</small></div>
+      <div id="pause" hidden>PAUSADO</div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
