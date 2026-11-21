@@ -10,3 +10,13 @@
 #onlineStatus{margin-top:12px;color:#aab6c5;font-size:9px;letter-spacing:1px;line-height:1.6;max-width:360px}
 #onlineStatus.connected{color:#77e0a1}
 #onlineStatus.error{color:#ff777e}
+
+.authBox{margin-top:18px;padding:14px;background:#080d16d9;border:1px solid #313b49;max-width:360px;backdrop-filter:blur(8px)}
+.authTabs{display:flex;gap:8px;margin-bottom:10px}
+.authTabs .authTab{margin:0;padding:8px 12px;background:#18202c;color:#aeb8c7;clip-path:none;font-size:9px}
+.authTabs .authTab.active{background:#a71f2a;color:#fff}
+.authBox input{display:block;width:100%;margin:7px 0;padding:11px 12px;background:#0c131e;border:1px solid #3a4655;color:white;font:12px Inter,Arial,sans-serif}
+.authBox input[hidden]{display:none}
+.authBox .authSubmit{margin:8px 0 0;padding:11px 15px;clip-path:none;font-size:9px}
+#authStatus{margin-top:9px;color:#aeb8c7;font-size:10px;line-height:1.5}
+#authStatus.connected{color:#7ce4a5}#authStatus.error{color:#ff7c83}
