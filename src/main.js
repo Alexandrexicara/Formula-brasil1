@@ -39,25 +39,36 @@ const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add
 let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1;
 const onlineStatus=document.querySelector('#onlineStatus');
 const serverUrl=import.meta.env.VITE_SERVER_URL;
-let socket=null,onlineRoom=null;
-if(serverUrl){
-  socket=io(serverUrl,{transports:['websocket','polling'],timeout:8000,reconnection:true});
+let socket=null,onlineRoom=null,authToken=localStorage.getItem('formulaBr1Token')||'',authMode='login';
+function connectSocket(){if(!serverUrl||!authToken)return;socket?.disconnect();socket=io(serverUrl,{auth:{token:authToken},transports:['websocket','polling'],timeout:8000,reconnection:true});
   socket.on('connect',()=>{onlineStatus.textContent='SERVIDOR CONECTADO · PRONTO PARA ENTRAR NA FILA';onlineStatus.className='connected';});
   socket.on('connect_error',()=>{onlineStatus.textContent='NÃO FOI POSSÍVEL CONECTAR AO SERVIDOR. O TREINO LIVRE CONTINUA DISPONÍVEL.';onlineStatus.className='error';});
   socket.on('grid:joined',data=>{onlineRoom=data.room;onlineStatus.textContent='GRID '+data.room.id+' · '+data.room.players.length+'/20 PILOTOS';});
   socket.on('grid:update',room=>{onlineRoom=room;onlineStatus.textContent='GRID '+room.id+' · '+room.players.length+'/20 PILOTOS · '+(room.status==='racing'?'CORRIDA EM ANDAMENTO':'AGUARDANDO LARGADA');});
   socket.on('race:start',()=>{onlineStatus.textContent='LARGADA! BOA CORRIDA.';onlineStatus.className='connected';});
   socket.on('race:finish',()=>{onlineStatus.textContent='CORRIDA ENCERRADA';});
-}else{
+}
+if(serverUrl&&authToken)connectSocket();
+if(!serverUrl){
   onlineStatus.textContent='SERVIDOR MULTIPLAYER SERÁ CONECTADO QUANDO O RENDER FOR CONFIGURADO.';
 }
 const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')external=!external;if(e.key==='Escape'&&started){paused=!paused;document.querySelector('#pause').hidden=!paused;}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 document.querySelector('#start').onclick=()=>{started=true;document.querySelector('#startPanel').style.display='none';document.querySelector('#loading').style.display='none';};
+function setAuthMode(mode){authMode=mode;document.querySelector('#authEmail').hidden=mode!=='register';document.querySelector('#authLogin').placeholder=mode==='register'?'Nome de piloto':'E-mail ou nome de piloto';document.querySelector('#authSubmit').textContent=mode==='register'?'CRIAR CONTA':'ENTRAR NA CONTA';document.querySelector('#loginTab').classList.toggle('active',mode==='login');document.querySelector('#registerTab').classList.toggle('active',mode==='register');}
+document.querySelector('#loginTab').onclick=()=>setAuthMode('login');
+document.querySelector('#registerTab').onclick=()=>setAuthMode('register');
+document.querySelector('#authSubmit').onclick=async()=>{
+ const status=document.querySelector('#authStatus');if(!serverUrl){status.textContent='O servidor será ativado após a configuração do Render.';return;}
+ const login=document.querySelector('#authLogin').value.trim(),password=document.querySelector('#authPassword').value;
+ const body=authMode==='register'?{username:login,email:document.querySelector('#authEmail').value.trim(),password}:{login,password};
+ status.textContent='Conectando…';
+ try{const response=await fetch(serverUrl+'/api/auth/'+(authMode==='register'?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Falha na autenticação.');authToken=data.token;localStorage.setItem('formulaBr1Token',authToken);document.querySelector('#pilotName').value=data.player.username;status.textContent='Conta conectada: '+data.player.username;status.className='connected';connectSocket();}catch(e){status.textContent=e.message;status.className='error';}
+};
 document.querySelector('#onlineStart').onclick=()=>{
-  if(!socket){onlineStatus.textContent='O GRID ONLINE ESTÁ PREPARADO NA INTERFACE. FALTA CONFIGURAR A URL DO SERVIDOR NO RENDER.';onlineStatus.className='error';return;}
-  if(!socket.connected){onlineStatus.textContent='CONECTANDO AO SERVIDOR…';socket.connect();return;}
-  socket.emit('queue:join',{name:document.querySelector('#pilotName').value});
-  onlineStatus.textContent='PROCURANDO VAGA NO GRID…';
+ if(!serverUrl){onlineStatus.textContent='O GRID ONLINE ESTÁ PREPARADO. FALTA PUBLICAR O SERVIDOR NO RENDER.';onlineStatus.className='error';return;}
+ if(!authToken){document.querySelector('#authStatus').textContent='Entre ou crie uma conta antes de entrar no grid.';return;}
+ if(!socket?.connected){onlineStatus.textContent='CONECTANDO AO SERVIDOR…';if(!socket)connectSocket();else socket.connect();return;}
+ socket.emit('queue:join');onlineStatus.textContent='PROCURANDO VAGA NO GRID…';
 };
 function drawMap(){let c=document.querySelector('#minimap').getContext('2d');c.clearRect(0,0,150,100);c.strokeStyle='#5c6572';c.lineWidth=5;c.beginPath();curve.getPoints(220).forEach((p,i)=>{let x=75+p.x*.48,y=50+p.z*.48;i?c.lineTo(x,y):c.moveTo(x,y)});c.closePath();c.stroke();let p=curve.getPointAt(progress);c.fillStyle='#ff3b45';c.beginPath();c.arc(75+p.x*.48,50+p.z*.48,4,0,7);c.fill();}
 let last=performance.now();function animate(now){requestAnimationFrame(animate);let dt=Math.min((now-last)/1000,.04);last=now;if(started&&!paused){elapsed+=dt;let accel=keys.w||keys.arrowup,brake=keys.s||keys.arrowdown,left=keys.a||keys.arrowleft,right=keys.d||keys.arrowright;speed=THREE.MathUtils.clamp(speed+(accel?52:0)*dt-(brake?105:0)*dt-(accel?0:7)*dt,0,330);speed=Math.max(0,speed);let target=(left?-1:0)+(right?1:0);steer=THREE.MathUtils.damp(steer,target,5,dt);let turn=steer*(.00013+speed*.0000018);progress=(progress+speed*dt/curve.getLength()*.28+1)%1;let p=curve.getPointAt(progress),t=curve.getTangentAt(progress);heading=Math.atan2(-t.x,-t.z)+steer*.18;car.position.set(p.x,.08,p.z);car.rotation.y=heading;if(socket?.connected&&onlineRoom?.status==='racing')socket.volatile.emit('player:state',{x:p.x,y:.08,z:p.z,rotation:heading,speed});gear=speed<5?1:Math.min(8,Math.max(1,Math.floor(speed/42)+1));}
