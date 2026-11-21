@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { io } from 'socket.io-client';
 import './style.css';
 
 const app=document.querySelector('#app');
@@ -36,10 +37,30 @@ const dash=box(cockpit,new THREE.MeshStandardMaterial({color:0x06090e,emissive:0
 const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.48,-.25);car.add(cockpitCam);
 const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add(externalCam);
 let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1;
+const onlineStatus=document.querySelector('#onlineStatus');
+const serverUrl=import.meta.env.VITE_SERVER_URL;
+let socket=null,onlineRoom=null;
+if(serverUrl){
+  socket=io(serverUrl,{transports:['websocket','polling'],timeout:8000,reconnection:true});
+  socket.on('connect',()=>{onlineStatus.textContent='SERVIDOR CONECTADO · PRONTO PARA ENTRAR NA FILA';onlineStatus.className='connected';});
+  socket.on('connect_error',()=>{onlineStatus.textContent='NÃO FOI POSSÍVEL CONECTAR AO SERVIDOR. O TREINO LIVRE CONTINUA DISPONÍVEL.';onlineStatus.className='error';});
+  socket.on('grid:joined',data=>{onlineRoom=data.room;onlineStatus.textContent='GRID '+data.room.id+' · '+data.room.players.length+'/20 PILOTOS';});
+  socket.on('grid:update',room=>{onlineRoom=room;onlineStatus.textContent='GRID '+room.id+' · '+room.players.length+'/20 PILOTOS · '+(room.status==='racing'?'CORRIDA EM ANDAMENTO':'AGUARDANDO LARGADA');});
+  socket.on('race:start',()=>{onlineStatus.textContent='LARGADA! BOA CORRIDA.';onlineStatus.className='connected';});
+  socket.on('race:finish',()=>{onlineStatus.textContent='CORRIDA ENCERRADA';});
+}else{
+  onlineStatus.textContent='SERVIDOR MULTIPLAYER SERÁ CONECTADO QUANDO O RENDER FOR CONFIGURADO.';
+}
 const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')external=!external;if(e.key==='Escape'&&started){paused=!paused;document.querySelector('#pause').hidden=!paused;}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 document.querySelector('#start').onclick=()=>{started=true;document.querySelector('#startPanel').style.display='none';document.querySelector('#loading').style.display='none';};
+document.querySelector('#onlineStart').onclick=()=>{
+  if(!socket){onlineStatus.textContent='O GRID ONLINE ESTÁ PREPARADO NA INTERFACE. FALTA CONFIGURAR A URL DO SERVIDOR NO RENDER.';onlineStatus.className='error';return;}
+  if(!socket.connected){onlineStatus.textContent='CONECTANDO AO SERVIDOR…';socket.connect();return;}
+  socket.emit('queue:join',{name:document.querySelector('#pilotName').value});
+  onlineStatus.textContent='PROCURANDO VAGA NO GRID…';
+};
 function drawMap(){let c=document.querySelector('#minimap').getContext('2d');c.clearRect(0,0,150,100);c.strokeStyle='#5c6572';c.lineWidth=5;c.beginPath();curve.getPoints(220).forEach((p,i)=>{let x=75+p.x*.48,y=50+p.z*.48;i?c.lineTo(x,y):c.moveTo(x,y)});c.closePath();c.stroke();let p=curve.getPointAt(progress);c.fillStyle='#ff3b45';c.beginPath();c.arc(75+p.x*.48,50+p.z*.48,4,0,7);c.fill();}
-let last=performance.now();function animate(now){requestAnimationFrame(animate);let dt=Math.min((now-last)/1000,.04);last=now;if(started&&!paused){elapsed+=dt;let accel=keys.w||keys.arrowup,brake=keys.s||keys.arrowdown,left=keys.a||keys.arrowleft,right=keys.d||keys.arrowright;speed=THREE.MathUtils.clamp(speed+(accel?52:0)*dt-(brake?105:0)*dt-(accel?0:7)*dt,0,330);speed=Math.max(0,speed);let target=(left?-1:0)+(right?1:0);steer=THREE.MathUtils.damp(steer,target,5,dt);let turn=steer*(.00013+speed*.0000018);progress=(progress+speed*dt/curve.getLength()*.28+1)%1;let p=curve.getPointAt(progress),t=curve.getTangentAt(progress);heading=Math.atan2(-t.x,-t.z)+steer*.18;car.position.set(p.x,.08,p.z);car.rotation.y=heading;gear=speed<5?1:Math.min(8,Math.max(1,Math.floor(speed/42)+1));}
+let last=performance.now();function animate(now){requestAnimationFrame(animate);let dt=Math.min((now-last)/1000,.04);last=now;if(started&&!paused){elapsed+=dt;let accel=keys.w||keys.arrowup,brake=keys.s||keys.arrowdown,left=keys.a||keys.arrowleft,right=keys.d||keys.arrowright;speed=THREE.MathUtils.clamp(speed+(accel?52:0)*dt-(brake?105:0)*dt-(accel?0:7)*dt,0,330);speed=Math.max(0,speed);let target=(left?-1:0)+(right?1:0);steer=THREE.MathUtils.damp(steer,target,5,dt);let turn=steer*(.00013+speed*.0000018);progress=(progress+speed*dt/curve.getLength()*.28+1)%1;let p=curve.getPointAt(progress),t=curve.getTangentAt(progress);heading=Math.atan2(-t.x,-t.z)+steer*.18;car.position.set(p.x,.08,p.z);car.rotation.y=heading;if(socket?.connected&&onlineRoom?.status==='racing')socket.volatile.emit('player:state',{x:p.x,y:.08,z:p.z,rotation:heading,speed});gear=speed<5?1:Math.min(8,Math.max(1,Math.floor(speed/42)+1));}
 let activeCam=external?externalCam:cockpitCam;let wp=activeCam.getWorldPosition(new THREE.Vector3()),look=external?car.position.clone().add(new THREE.Vector3(0,.8,0)):wp.clone().add(new THREE.Vector3(0,-.05,-25).applyQuaternion(car.quaternion));camera.position.lerp(wp,.18);camera.lookAt(look);
 document.querySelector('#speed').textContent=Math.round(speed);document.querySelector('#gear').textContent=started?gear:'N';document.querySelector('#clock').textContent=new Date(elapsed*1000).toISOString().slice(14,23);document.querySelector('#cameraLabel').textContent=external?'CÂMERA EXTERNA':'CÂMERA COCKPIT';drawMap();renderer.render(scene,camera);}
 requestAnimationFrame(animate);
