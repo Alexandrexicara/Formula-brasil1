@@ -51,8 +51,3 @@
 .pedals{display:flex;gap:8px}.pedals button{margin:0;padding:12px 14px;min-width:78px;min-height:44px;border:1px solid #8793a2;border-radius:5px;font-size:9px;letter-spacing:1px;touch-action:none;user-select:none}
 #throttleBtn{background:#126e43}#throttleBtn.active{background:#1ac878}#brakeBtn{background:#8d2029}#brakeBtn.active{background:#ed3343}
 @media(max-width:650px){#driveControls{display:flex;position:fixed;left:8px;right:8px;bottom:90px;z-index:30;align-items:flex-end;justify-content:space-between;pointer-events:auto;touch-action:none}#steerPad{display:flex;width:120px;height:100px;align-items:center;justify-content:center;touch-action:none;user-select:none}#steerWheel{width:104px;height:70px}.pedals{flex-direction:column;gap:9px}.pedals button{min-width:82px;min-height:52px;padding:10px 8px;font-size:9px}}
-
-/* Cockpit fotográfico integrado; a pista 3D continua animada atrás do enquadramento. */
-#cockpitOverlay{position:fixed;left:0;bottom:0;width:100vw;height:54vh;object-fit:cover;object-position:center bottom;z-index:4;pointer-events:none;user-select:none;-webkit-user-drag:none;}
-#hud{z-index:8}
-@media(max-width:650px){#cockpitOverlay{height:43vh;object-position:center bottom}}
