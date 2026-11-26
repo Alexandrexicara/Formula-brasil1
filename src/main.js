@@ -119,16 +119,40 @@ function updateRaceAudio(accelerating,braking){
  if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
 }
 
-function loadFormulaModel(index=0){
- if(index>=carAssetUrls.length){console.error('Nenhum modelo 3D de Fórmula foi carregado.');const status=document.querySelector('#loading');if(status){status.style.display='grid';status.textContent='ERRO AO CARREGAR O MODELO 3D DO CARRO';}return;}
- const loader=new GLTFLoader();
- loader.load(carAssetUrls[index],gltf=>{
-   const template=gltf.scene;fitFormulaModel(template);
-   attachFormulaModel(car,template);
-   for(const ai of aiDrivers){attachFormulaModel(ai.model,template);}
-   carAssetLoaded=true;
-   console.info('Modelo 3D de Fórmula carregado:',carAssetUrls[index]);
- },undefined,error=>{console.warn('Falha ao carregar modelo 3D:',carAssetUrls[index],error);loadFormulaModel(index+1);});
+function buildProceduralFormulaCar(target,paint=red){
+ const group=new THREE.Group();target.add(group);
+ const carbonFiber=new THREE.MeshStandardMaterial({color:0x10151d,metalness:.72,roughness:.25});
+ const bodyPaint=paint.clone();
+ const body=(geometry,material,x,y,z)=>{const mesh=new THREE.Mesh(geometry,material);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;};
+ body(new THREE.BoxGeometry(1.45,.38,2.65),bodyPaint,0,.55,.05);
+ body(new THREE.BoxGeometry(.72,.22,2.25),carbonFiber,0,.72,-.02);
+ const nose=body(new THREE.CylinderGeometry(.08,.46,2.05,8),bodyPaint,0,.58,-1.82);nose.rotation.x=-Math.PI/2;
+ body(new THREE.BoxGeometry(2.15,.12,.42),carbonFiber,0,.42,-2.75);
+ body(new THREE.BoxGeometry(2.2,.16,.35),bodyPaint,0,.42,1.42);
+ body(new THREE.BoxGeometry(2.7,.13,.48),carbonFiber,0,.95,1.78);
+ for(const x of [-.92,.92]){
+  body(new THREE.BoxGeometry(.16,.48,1.35),carbonFiber,x,.56,-.05);
+  for(const z of [-1.35,1.25]){
+   const tire=body(new THREE.CylinderGeometry(.43,.43,.28,24),new THREE.MeshStandardMaterial({color:0x08090b,roughness:.94}),x,.42,z);
+   tire.rotation.z=Math.PI/2;
+   const rim=body(new THREE.CylinderGeometry(.22,.22,.3,20),new THREE.MeshStandardMaterial({color:0x929aa4,metalness:.8,roughness:.25}),x,.42,z);rim.rotation.z=Math.PI/2;
+   formulaWheelMeshes.push({mesh:tire,owner:target,front:z<0,baseX:tire.rotation.x,baseY:tire.rotation.y,procedural:true});
+   formulaWheelMeshes.push({mesh:rim,owner:target,front:z<0,baseX:rim.rotation.x,baseY:rim.rotation.y,procedural:true});
+  }
+ }
+ const halo=new THREE.Mesh(new THREE.TorusGeometry(.55,.055,10,28,Math.PI*1.55),new THREE.MeshStandardMaterial({color:0xffc928,metalness:.5,roughness:.3}));
+ halo.position.set(0,1.22,.12);halo.rotation.z=Math.PI;group.add(halo);
+ body(new THREE.BoxGeometry(.42,.28,.55),carbonFiber,0,.96,.12);
+ const wheel=new THREE.Mesh(new THREE.TorusGeometry(.24,.035,10,28),carbonFiber);wheel.position.set(0,1.05,-.52);wheel.rotation.x=.25;group.add(wheel);
+ formulaSteeringMeshes.push({mesh:wheel,owner:target,baseZ:wheel.rotation.z});
+ return group;
+}
+function loadFormulaModel(){
+ buildProceduralFormulaCar(car,red);
+ for(const ai of aiDrivers)buildProceduralFormulaCar(ai.model,red);
+ carAssetLoaded=true;
+ const status=document.querySelector('#loading');if(status)status.style.display='none';
+ console.info('Modelo de Fórmula 3D procedural carregado localmente; sem dependência de CORS ou KTX2.');
 }
 let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1,laps=0,lapElapsed=0,bestLap=Infinity,lateral=0,finished=false,gameMode='practice';
 const TOTAL_LAPS=3,aiDrivers=[];
