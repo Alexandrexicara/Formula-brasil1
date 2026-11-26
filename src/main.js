@@ -170,11 +170,17 @@ function buildProceduralFormulaCar(target,paint=red){
  return group;
 }
 function loadFormulaModel(){
- // Mantém o cockpit 3D existente e remove apenas a carroceria procedural do jogador.
- for(const ai of aiDrivers)buildProceduralFormulaCar(ai.model,red);
+ // Carro completo do piloto: carroceria, rodas, asas, halo e cockpit funcional.
+ // A câmera interna continua no cockpit; a câmera externa agora mostra o carro inteiro.
+ buildProceduralFormulaCar(car,red);
+ // Cada adversário recebe pintura própria e carroceria independente.
+ aiDrivers.forEach((ai,index)=>{
+  const paint=new THREE.MeshStandardMaterial({color:aiColors[index%aiColors.length],metalness:.58,roughness:.3});
+  buildProceduralFormulaCar(ai.model,paint);
+ });
  carAssetLoaded=true;
  const status=document.querySelector('#loading');if(status)status.style.display='none';
- console.info('Modelo de Fórmula 3D procedural carregado localmente; sem dependência de CORS ou KTX2.');
+ console.info('Carro completo do piloto e cinco carros de IA construídos em 3D.');
 }
 let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1,laps=0,lapElapsed=0,bestLap=Infinity,lateral=0,finished=false,gameMode='practice';
 let mouseSteer=0,throttleTouch=false,brakeTouch=false,mouseSteerActive=false;
