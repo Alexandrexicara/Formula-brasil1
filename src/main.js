@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { io } from 'socket.io-client';
 import './style.css';
 
@@ -31,19 +32,55 @@ for(let i=0;i<28;i++){let a=i/28*Math.PI*2,p=sampleTrackPoint(a),s=new THREE.Vec
 for(let i=0;i<16;i++){let light=new THREE.PointLight(i%2?0x297dff:0xff253f,38,28,2);let p=sampleTrackPoint(i/16);light.position.set(p.x,7,p.z);scene.add(light);}
 
 const car=new THREE.Group();scene.add(car);
-const carbon=new THREE.MeshStandardMaterial({color:0x11151b,metalness:.7,roughness:.28}),red=new THREE.MeshStandardMaterial({color:0xc91929,metalness:.55,roughness:.3}),rubber=new THREE.MeshStandardMaterial({color:0x08090b,roughness:.9}),glass=new THREE.MeshStandardMaterial({color:0x101d2a,metalness:.7,roughness:.12});
-function box(parent,mat,x,y,z,w,h,d){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
-box(car,carbon,0,.45,0,1.35,.32,3.1);box(car,red,0,.56,-.55,1.5,.18,1.45);box(car,red,0,.52,1.1,1.8,.12,.5);box(car,carbon,0,.72,-1.12,.65,.24,.8);
-const nose=new THREE.Mesh(new THREE.ConeGeometry(.42,2.1,4),red);nose.rotation.x=-Math.PI/2;nose.position.set(0,.48,-2.15);car.add(nose);
-box(car,carbon,0,.28,-3.1,2.5,.12,.28);box(car,red,0,1.05,1.25,1.5,.65,.12);
-for(let x of [-.88,.88])for(let z of [-1.05,1.1]){let wheel=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.28,24),rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.43,z);car.add(wheel);let hub=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.29,20),new THREE.MeshStandardMaterial({color:0x9da4ae,metalness:.9}));hub.rotation.z=Math.PI/2;hub.position.copy(wheel.position);car.add(hub);}
-const halo=new THREE.Mesh(new THREE.TorusGeometry(.62,.055,10,36,Math.PI),carbon);halo.rotation.z=Math.PI;halo.position.set(0,1.15,-.15);car.add(halo);
-const cockpit= new THREE.Group();car.add(cockpit);box(cockpit,carbon,0,.88,-.15,.92,.16,.8);
-const steering=new THREE.Mesh(new THREE.TorusGeometry(.29,.045,10,32),carbon);steering.position.set(0,1.12,-.62);steering.rotation.x=.25;cockpit.add(steering);box(cockpit,red,0,1.12,-.62,.25,.18,.12);
-for(let x of [-.37,.37]){let glove=new THREE.Mesh(new THREE.SphereGeometry(.13,16,12),new THREE.MeshStandardMaterial({color:0x151a22}));glove.position.set(x,1.08,-.56);cockpit.add(glove);}
-const dash=box(cockpit,new THREE.MeshStandardMaterial({color:0x06090e,emissive:0x09213b,emissiveIntensity:.8}),0,1.05,-.05,.68,.25,.12);dash.rotation.x=-.25;
-const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.48,-.25);car.add(cockpitCam);
+const carbon=new THREE.MeshStandardMaterial({color:0x10151d,metalness:.72,roughness:.24});
+const red=new THREE.MeshStandardMaterial({color:0xc91929,metalness:.58,roughness:.28});
+const cockpit=new THREE.Group();car.add(cockpit);
+function cockpitBox(parent,mat,x,y,z,w,h,d){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m;}
+/* Cockpit independente do modelo externo: câmera de pilotagem, painel e volante. */
+const cockpitFloor=cockpitBox(cockpit,carbon,0,.72,-.1,.86,.12,1.05);
+const steering=new THREE.Mesh(new THREE.TorusGeometry(.27,.035,10,32),carbon);
+steering.position.set(0,1.08,-.48);steering.rotation.x=.22;cockpit.add(steering);
+cockpitBox(cockpit,red,0,1.08,-.48,.2,.13,.1);
+const dash=cockpitBox(cockpit,new THREE.MeshStandardMaterial({color:0x05090f,emissive:0x07305b,emissiveIntensity:1.1,metalness:.3}),0,1.03,-.04,.68,.23,.12);
+dash.rotation.x=-.18;
+const displayCanvas=document.createElement('canvas');displayCanvas.width=512;displayCanvas.height=256;
+const displayCtx=displayCanvas.getContext('2d');displayCtx.fillStyle='#06101c';displayCtx.fillRect(0,0,512,256);
+displayCtx.fillStyle='#42e6ff';displayCtx.font='bold 76px Arial';displayCtx.fillText('320',28,112);
+displayCtx.fillStyle='#f4f7ff';displayCtx.font='bold 28px Arial';displayCtx.fillText('KM/H   GEAR 8',28,170);
+const displayTexture=new THREE.CanvasTexture(displayCanvas);
+const screen=new THREE.Mesh(new THREE.PlaneGeometry(.58,.26),new THREE.MeshBasicMaterial({map:displayTexture}));
+screen.position.set(0,1.16,-.108);cockpit.add(screen);
+for(const x of [-.34,.34]){const glove=new THREE.Mesh(new THREE.SphereGeometry(.12,18,14),new THREE.MeshStandardMaterial({color:0x171c25,roughness:.9}));glove.position.set(x,1.04,-.42);cockpit.add(glove);}
+const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.32,-.62);car.add(cockpitCam);
 const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add(externalCam);
+let carAssetLoaded=false;
+const carAssetUrls=[
+ 'https://cdn.3dassets.dev/assets/15179/v1/model.glb',
+ 'https://tevy.dev/models/formula-car/v1/lod0.glb'
+];
+function fitFormulaModel(root){
+ const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+ const scale=5.25/Math.max(size.z,size.x);
+ root.scale.setScalar(scale);
+ root.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+ root.rotation.y=Math.PI; // os modelos do pacote têm o bico no +Z; o carro do jogo aponta para -Z.
+ root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material=o.material.clone();o.material.roughness=Math.min(.82,Math.max(.2,o.material.roughness??.45));}}});
+}
+function attachFormulaModel(target,template){
+ const visual=template.clone(true);visual.traverse(o=>{if(o.isMesh&&o.material)o.material=o.material.clone();});
+ target.add(visual);return visual;
+}
+function loadFormulaModel(index=0){
+ if(index>=carAssetUrls.length){console.error('Nenhum modelo 3D de Fórmula foi carregado.');const status=document.querySelector('#loading');if(status){status.style.display='grid';status.textContent='ERRO AO CARREGAR O MODELO 3D DO CARRO';}return;}
+ const loader=new GLTFLoader();
+ loader.load(carAssetUrls[index],gltf=>{
+   const template=gltf.scene;fitFormulaModel(template);
+   attachFormulaModel(car,template);
+   for(const ai of aiDrivers){attachFormulaModel(ai.model,template);}
+   carAssetLoaded=true;
+   console.info('Modelo 3D de Fórmula carregado:',carAssetUrls[index]);
+ },undefined,error=>{console.warn('Falha ao carregar modelo 3D:',carAssetUrls[index],error);loadFormulaModel(index+1);});
+}
 let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1,laps=0,lapElapsed=0,bestLap=Infinity,lateral=0,finished=false,gameMode='practice';
 const TOTAL_LAPS=3,aiDrivers=[];
 // Posiciona o carro na linha de largada antes de abrir o treino.
@@ -73,6 +110,7 @@ const aiColors=[0x174d9b,0xffc928,0xeeeeee,0x16a06b,0x8a42bd];
 for(let i=0;i<5;i++){const model=car.clone(true);model.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&o.material!==rubber){o.material=o.material.clone();o.material.color.setHex(aiColors[i]);}});scene.add(model);aiDrivers.push({model,progress:(.02+(i+1)*.105)%1,speed:220+i*7,laps:0,finished:false});}
 function trackPoint(t,offset=0){const u=safeTrackU(t),p=sampleTrackPoint(u),tan=sampleTrackTangent(u),side=new THREE.Vector3(-tan.z,0,tan.x).normalize();return p.addScaledVector(side,offset);}
 aiDrivers.forEach(a=>{const p=trackPoint(a.progress);a.model.position.set(p.x,.08,p.z);const t=sampleTrackTangent(a.progress);a.model.rotation.y=Math.atan2(-t.x,-t.z);});
+loadFormulaModel();
 const trackSelect=document.querySelector('#trackSelect');if(trackSelect){trackSelect.value=selectedTrack;trackSelect.onchange=()=>{location.search='?track='+encodeURIComponent(trackSelect.value);};}
 function startRace(){gameMode='race';started=true;finished=false;paused=false;elapsed=0;lapElapsed=0;bestLap=Infinity;laps=0;progress=.02;lateral=0;speed=0;const gridPoint=sampleTrackPoint(progress),gridTangent=sampleTrackTangent(progress);car.position.set(gridPoint.x,.08,gridPoint.z);car.rotation.y=Math.atan2(-gridTangent.x,-gridTangent.z);aiDrivers.forEach((a,i)=>{a.progress=(.02+(i+1)*.105)%1;a.laps=0;a.finished=false;});document.querySelector('#startPanel').style.display='none';document.querySelector('#loading').style.display='none';document.querySelector('#session').textContent='CORRIDA · 3 VOLTAS · '+(trackNames[selectedTrack]||'LAS VEGAS');document.querySelector('#lap').textContent='0/3';}
 document.querySelector('#start').onclick=()=>{startRace();gameMode='practice';document.querySelector('#session').textContent='TREINO LIVRE · '+(trackNames[selectedTrack]||'LAS VEGAS');document.querySelector('#lap').textContent='0/∞';};
