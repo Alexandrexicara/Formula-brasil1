@@ -72,8 +72,8 @@ let carAssetLoaded=false;
 const formulaWheelMeshes=[],formulaSteeringMeshes=[];
 let audioContext=null,engineOsc=null,engineGain=null,engineFilter=null,brakeNoise=null,brakeGain=null,wheelSpin=0;
 const carAssetUrls=[
- 'https://tevy.dev/models/formula-car/v1/lod0.glb',
- 'https://cdn.3dassets.dev/assets/15179/v1/model.glb'
+ 'https://models.vinish.dev/racing/formula-racer.glb',
+ 'https://tevy.dev/models/formula-car/v1/lod0.glb'
 ];
 function fitFormulaModel(root){
  const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
