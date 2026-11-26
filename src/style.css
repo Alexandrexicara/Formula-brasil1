@@ -29,3 +29,15 @@
 #startPanel .authBox input:focus{outline:2px solid #ff4652;outline-offset:1px}
 #startPanel .authBox .authSubmit:focus-visible,#startPanel .authTabs button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 @media(max-width:650px){.assetCredit{font-size:8px}#startPanel .authBox{width:100%;max-width:100%;min-width:0}#startPanel .authBox form{min-width:0}#startPanel .authBox input{width:100%;max-width:100%}}
+
+#driveControls{position:fixed;right:22px;bottom:82px;z-index:30;display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:auto;touch-action:none}
+#steerPad{width:142px;height:142px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;touch-action:none;user-select:none;cursor:grab}
+#steerWheel{position:relative;width:104px;height:104px;border:10px solid #1c232d;border-radius:50%;background:radial-gradient(circle,#252d38 0 16%,#080b10 17% 38%,#1a2029 39% 100%);box-shadow:0 0 0 2px #9aa4af,0 8px 22px #000b;transform:rotate(0deg);transition:transform .04s linear}
+#steerWheel:before,#steerWheel:after{content:"";position:absolute;background:#89939f;border-radius:4px;left:calc(50% - 4px);top:8px;width:8px;height:39px}
+#steerWheel:after{transform:rotate(90deg);transform-origin:50% 100%;top:40px;height:33px}
+.wheelSpoke{position:absolute;left:calc(50% - 4px);top:44px;width:8px;height:36px;background:#9aa4af;border-radius:4px}
+.wheelHub{position:absolute;left:calc(50% - 12px);top:calc(50% - 12px);width:24px;height:24px;border-radius:50%;background:#d12a35;border:3px solid #303946}
+#steerPad small{font-size:8px;letter-spacing:1px;color:#d7dce4;text-shadow:0 2px 5px #000;white-space:nowrap}
+.pedals{display:flex;gap:8px}.pedals button{margin:0;padding:12px 14px;min-width:78px;min-height:44px;clip-path:none;border:1px solid #8793a2;border-radius:5px;font-size:9px;letter-spacing:1px;touch-action:none;user-select:none}
+#throttleBtn{background:#126e43}#throttleBtn.active{background:#1ac878;box-shadow:0 0 18px #1ac87888}#brakeBtn{background:#8d2029}#brakeBtn.active{background:#ed3343;box-shadow:0 0 18px #ed334388}
+@media(max-width:650px){#driveControls{right:8px;bottom:95px;gap:8px}#steerPad{width:112px;height:112px}#steerWheel{width:82px;height:82px;border-width:8px}.pedals button{min-width:65px;padding:10px 8px;font-size:8px}}
