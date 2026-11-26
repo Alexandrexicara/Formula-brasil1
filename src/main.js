@@ -77,7 +77,7 @@ const trackSelect=document.querySelector('#trackSelect');if(trackSelect){trackSe
 function startRace(){gameMode='race';started=true;finished=false;paused=false;elapsed=0;lapElapsed=0;bestLap=Infinity;laps=0;progress=.02;lateral=0;speed=0;const gridPoint=sampleTrackPoint(progress),gridTangent=sampleTrackTangent(progress);car.position.set(gridPoint.x,.08,gridPoint.z);car.rotation.y=Math.atan2(-gridTangent.x,-gridTangent.z);aiDrivers.forEach((a,i)=>{a.progress=(.02+(i+1)*.105)%1;a.laps=0;a.finished=false;});document.querySelector('#startPanel').style.display='none';document.querySelector('#loading').style.display='none';document.querySelector('#session').textContent='CORRIDA · 3 VOLTAS · '+(trackNames[selectedTrack]||'LAS VEGAS');document.querySelector('#lap').textContent='0/3';}
 document.querySelector('#start').onclick=()=>{startRace();gameMode='practice';document.querySelector('#session').textContent='TREINO LIVRE · '+(trackNames[selectedTrack]||'LAS VEGAS');document.querySelector('#lap').textContent='0/∞';};
 document.querySelector('#raceStart').onclick=startRace;
-const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')external=!external;if(e.key==='Escape'&&started){paused=!paused;document.querySelector('#pause').hidden=!paused;}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const keys={};addEventListener('keydown',e=>{const key=String(e.key||'').toLowerCase();if(!key)return;keys[key]=true;if(key==='c')external=!external;if(key==='escape'&&started){paused=!paused;document.querySelector('#pause').hidden=!paused;}});addEventListener('keyup',e=>{const key=String(e.key||'').toLowerCase();if(key)keys[key]=false;});
 
 function setAuthMode(mode){
  authMode=mode;
