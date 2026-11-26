@@ -7,3 +7,19 @@
 #startPanel .authBox form{display:block;width:100%}
 #startPanel .authBox button,#startPanel .authBox input{pointer-events:auto!important}
 @media(max-width:650px){.topbar{padding:15px}.topbar #session{font-size:8px}.telemetry{top:65px;left:10px;gap:2px}.telemetry div{min-width:55px;padding:7px}.telemetry b{font-size:20px}.rightHud{right:10px;top:145px}.bottomHud{gap:9px;flex-wrap:wrap;font-size:7px;padding:12px 6px}#minimap{width:100px;height:70px}#startPanel{top:3dvh;bottom:3dvh;left:4vw;width:92vw;max-width:none;max-height:none;overflow-y:auto;padding:0 10px 24px 0}.authBox{width:100%;max-width:none;margin:12px 0;max-height:none;overflow:visible}#startPanel .authBox{position:relative;top:auto;right:auto;left:auto;transform:none;width:100%;max-width:none;max-height:none;margin:12px 0}.startActions button{min-height:44px}#engineerAdvice{max-width:80vw;font-size:9px}.engineerButton{font-size:8px;padding:9px 10px}}
+
+/* Painel Bug Tag: captura de erros para diagnóstico sem expor credenciais */
+#bugTag{position:fixed;right:12px;bottom:52px;z-index:220;margin:0;padding:9px 12px;background:#271116;border:1px solid #ff505b;color:#fff;font:800 10px Inter,Arial,sans-serif;letter-spacing:1px;clip-path:none;border-radius:4px;pointer-events:auto;box-shadow:0 3px 16px #0008}
+#bugTag span{display:inline-block;min-width:18px;margin-left:5px;padding:2px 5px;background:#ff303a;border-radius:10px;text-align:center}
+#bugPanel{position:fixed;right:12px;bottom:94px;z-index:221;width:min(390px,calc(100vw - 24px));max-height:55dvh;overflow:auto;padding:14px;background:#080d16f5;border:1px solid #ff505b;border-radius:8px;color:#eaf0f8;font:12px Inter,Arial,sans-serif;pointer-events:auto;box-shadow:0 12px 40px #000b}
+#bugPanel[hidden]{display:none!important}
+#bugPanel strong{color:#ff6670;font-size:13px}
+#bugPanel p{font-size:11px;line-height:1.5;color:#b9c4d3}
+#bugList{display:flex;flex-direction:column;gap:5px;max-height:28dvh;overflow:auto}
+.bugEntry{padding:6px 8px;background:#121b28;border-left:2px solid #ff505b;font-size:10px;overflow-wrap:anywhere}
+#bugPanel button{margin:10px 0 0;padding:10px 12px;clip-path:none;font-size:10px}
+#bugCopyStatus{margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:10px;color:#9fe4b7}
+#startPanel{scrollbar-gutter:stable}
+#startPanel .authBox{scrollbar-width:thin;scrollbar-color:#e93643 #111925}
+#startPanel .authBox input{font-size:16px}
+@media(max-width:650px){#bugTag{bottom:58px;right:8px;padding:8px 10px}#bugPanel{right:8px;bottom:98px;max-height:50dvh}#startPanel{scrollbar-width:thin}#startPanel .authBox{touch-action:pan-y}}
