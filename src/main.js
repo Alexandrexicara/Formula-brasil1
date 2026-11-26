@@ -157,7 +157,8 @@ function buildProceduralFormulaCar(target,paint=red){
  return group;
 }
 function loadFormulaModel(){
- buildProceduralFormulaCar(car,red);
+ // O carro do jogador deixa de ser uma malha procedural: a visão realista do cockpit é um asset integrado na interface.
+ cockpit.visible=false;
  for(const ai of aiDrivers)buildProceduralFormulaCar(ai.model,red);
  carAssetLoaded=true;
  const status=document.querySelector('#loading');if(status)status.style.display='none';
