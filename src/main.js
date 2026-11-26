@@ -12,7 +12,9 @@ function recordBug(type,message,source=''){
 }
 window.addEventListener('error',e=>recordBug('JS ERROR',e.message,e.filename+':'+e.lineno));
 window.addEventListener('unhandledrejection',e=>recordBug('PROMISE',e.reason?.message||e.reason));
-const nativeConsoleError=console.error.bind(console);console.error=(...args)=>{nativeConsoleError(...args);recordBug('CONSOLE',args.map(v=>v?.message||String(v)).join(' '));};
+const nativeConsoleError=console.error.bind(console);console.error=(...args)=>{nativeConsoleError(...args);recordBug('CONSOLE ERROR',args.map(v=>v?.message||String(v)).join(' '));};
+const nativeConsoleWarn=console.warn.bind(console);console.warn=(...args)=>{nativeConsoleWarn(...args);recordBug('CONSOLE WARN',args.map(v=>v?.message||String(v)).join(' '));};
+const nativeFetch=window.fetch.bind(window);window.fetch=async(...args)=>{const url=(()=>{try{return new URL(typeof args[0]==='string'?args[0]:args[0].url,location.href).pathname;}catch{return 'request';}})();try{const response=await nativeFetch(...args);if(!response.ok)recordBug('HTTP '+response.status,url);return response;}catch(error){recordBug('NETWORK',error?.message||error,url);throw error;}};
 const app=document.querySelector('#app');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x080d18);scene.fog=new THREE.Fog(0x080d18,90,420);
 const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.1,1000);
@@ -192,7 +194,7 @@ document.querySelector('#authForm').addEventListener('submit',async event=>{
  const email=document.querySelector('#authEmail').value.trim();
  const password=document.querySelector('#authPassword').value;
  const register=authMode==='register';
- if(!serverUrl){status.textContent='Servidor não configurado. Tente novamente em instantes.';status.className='error';return;}
+ if(!serverUrl){recordBug('AUTH CONFIG','VITE_SERVER_URL não configurada');status.textContent='Servidor não configurado. Tente novamente em instantes.';status.className='error';return;}
  if(login.length<3){status.textContent='Digite um nome de piloto com pelo menos 3 caracteres.';status.className='error';return;}
  if(register&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status.textContent='Digite um endereço de e-mail válido.';status.className='error';return;}
  if(password.length<8||password.length>72){status.textContent='A senha precisa ter entre 8 e 72 caracteres.';status.className='error';return;}
