@@ -233,7 +233,7 @@ document.querySelector('#authForm').addEventListener('submit',async event=>{
   document.querySelector('#pilotName').value=data.player.username;
   status.textContent=(register?'Conta criada e conectada: ':'Login realizado: ')+data.player.username;
   status.className='connected';connectSocket();
- }catch(error){recordBug('AUTH ERROR',error.message);status.textContent=error.message||'Não foi possível conectar. Verifique sua internet e tente novamente.';status.className='error';}
+ }catch(error){recordBug('AUTH ERROR',error.message);if(register&&/já cadastrado/i.test(error.message)){setAuthMode('login');status.textContent='Esse nome ou e-mail já tem uma conta. Abra ENTRAR e use sua senha.';status.className='error';}else{status.textContent=error.message||'Não foi possível conectar. Verifique sua internet e tente novamente.';status.className='error';}}
  finally{button.disabled=false;button.textContent=register?'CRIAR MINHA CONTA':'ENTRAR NA CONTA';}
 });
 document.querySelector('#bugTag').onclick=()=>{const p=document.querySelector('#bugPanel');p.hidden=!p.hidden;};
