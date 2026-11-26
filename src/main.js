@@ -158,7 +158,8 @@ function loadFormulaModel(){
  const status=document.querySelector('#loading');if(status)status.style.display='none';
  console.info('Modelo de Fórmula 3D procedural carregado localmente; sem dependência de CORS ou KTX2.');
 }
-let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1,laps=0,lapElapsed=0,bestLap=Infinity,lateral=0,finished=false,gameMode='practice';\nlet mouseSteer=0,throttleTouch=false,brakeTouch=false,mouseDrag=false;
+let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1,laps=0,lapElapsed=0,bestLap=Infinity,lateral=0,finished=false,gameMode='practice';
+let mouseSteer=0,throttleTouch=false,brakeTouch=false,mouseDrag=false;
 const TOTAL_LAPS=3,aiDrivers=[];
 // Posiciona o carro na linha de largada antes de abrir o treino.
 const initialPoint=sampleTrackPoint(progress);const initialTangent=sampleTrackTangent(progress);car.position.set(initialPoint.x,.08,initialPoint.z);car.rotation.y=Math.atan2(-initialTangent.x,-initialTangent.z);
