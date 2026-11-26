@@ -54,7 +54,7 @@ function connectSocket(){if(!serverUrl||!authToken)return;socket?.disconnect();s
   socket.on('grid:joined',data=>{onlineRoom=data.room;syncRemotePlayers(data.room);onlineStatus.textContent='GRID '+data.room.id+' · '+data.room.players.length+'/20 PILOTOS';});
   socket.on('grid:update',room=>{onlineRoom=room;syncRemotePlayers(room);onlineStatus.textContent='GRID '+room.id+' · '+room.players.length+'/20 PILOTOS · '+(room.status==='racing'?'CORRIDA EM ANDAMENTO':'AGUARDANDO LARGADA');});
   socket.on('player:update',updateRemote);
-  socket.on('race:start',()=>{onlineStatus.textContent='LARGADA! BOA CORRIDA.';onlineStatus.className='connected';});
+  socket.on('race:start',()=>{onlineStatus.textContent='LARGADA! BOA CORRIDA.';onlineStatus.className='connected';startRace();});
   socket.on('race:finish',()=>{onlineStatus.textContent='CORRIDA ENCERRADA';});
 }
 if(serverUrl&&authToken)connectSocket();
