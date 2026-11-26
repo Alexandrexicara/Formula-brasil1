@@ -73,16 +73,48 @@ document.querySelector('#start').onclick=()=>{startRace();gameMode='practice';do
 document.querySelector('#raceStart').onclick=startRace;
 const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')external=!external;if(e.key==='Escape'&&started){paused=!paused;document.querySelector('#pause').hidden=!paused;}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 
-function setAuthMode(mode){authMode=mode;document.querySelector('#authEmail').hidden=mode!=='register';document.querySelector('#authLogin').placeholder=mode==='register'?'Nome de piloto':'E-mail ou nome de piloto';document.querySelector('#authSubmit').textContent=mode==='register'?'CRIAR CONTA':'ENTRAR NA CONTA';document.querySelector('#loginTab').classList.toggle('active',mode==='login');document.querySelector('#registerTab').classList.toggle('active',mode==='register');}
-document.querySelector('#loginTab').onclick=()=>setAuthMode('login');
-document.querySelector('#registerTab').onclick=()=>setAuthMode('register');
-document.querySelector('#authSubmit').onclick=async()=>{
- const status=document.querySelector('#authStatus');if(!serverUrl){status.textContent='O servidor será ativado após a configuração do Render.';return;}
- const login=document.querySelector('#authLogin').value.trim(),password=document.querySelector('#authPassword').value;
- const body=authMode==='register'?{username:login,email:document.querySelector('#authEmail').value.trim(),password}:{login,password};
- status.textContent='Conectando…';
- try{const response=await fetch(serverUrl+'/api/auth/'+(authMode==='register'?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Falha na autenticação.');authToken=data.token;localStorage.setItem('formulaBr1Token',authToken);document.querySelector('#pilotName').value=data.player.username;status.textContent='Conta conectada: '+data.player.username;status.className='connected';connectSocket();}catch(e){status.textContent=e.message;status.className='error';}
-};
+function setAuthMode(mode){
+ authMode=mode;
+ const register=mode==='register';
+ const email=document.querySelector('#authEmail');
+ email.hidden=!register;
+ email.required=register;
+ document.querySelector('#authLogin').placeholder=register?'Nome de piloto':'E-mail ou nome de piloto';
+ document.querySelector('#authPassword').placeholder=register?'Crie uma senha (mínimo 8 caracteres)':'Sua senha';
+ document.querySelector('#authSubmit').textContent=register?'CRIAR MINHA CONTA':'ENTRAR NA CONTA';
+ document.querySelector('#loginTab').classList.toggle('active',!register);
+ document.querySelector('#registerTab').classList.toggle('active',register);
+ document.querySelector('#authStatus').textContent=register?'Informe nome de piloto, e-mail e senha para criar sua conta.':'Informe seu e-mail ou nome de piloto e sua senha.';
+ document.querySelector('#authStatus').className='';
+}
+document.querySelector('#loginTab').addEventListener('click',()=>setAuthMode('login'));
+document.querySelector('#registerTab').addEventListener('click',()=>setAuthMode('register'));
+document.querySelector('#authForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const status=document.querySelector('#authStatus');
+ const button=document.querySelector('#authSubmit');
+ const login=document.querySelector('#authLogin').value.trim();
+ const email=document.querySelector('#authEmail').value.trim();
+ const password=document.querySelector('#authPassword').value;
+ const register=authMode==='register';
+ if(!serverUrl){status.textContent='Servidor não configurado. Tente novamente em instantes.';status.className='error';return;}
+ if(login.length<3){status.textContent='Digite um nome de piloto com pelo menos 3 caracteres.';status.className='error';return;}
+ if(register&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){status.textContent='Digite um endereço de e-mail válido.';status.className='error';return;}
+ if(password.length<8){status.textContent='A senha precisa ter pelo menos 8 caracteres.';status.className='error';return;}
+ button.disabled=true;button.textContent=register?'CRIANDO CONTA…':'ENTRANDO…';
+ status.textContent='Conectando ao servidor…';status.className='';
+ try{
+  const response=await fetch(serverUrl.replace(/\\/+$/,'')+'/api/auth/'+(register?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(register?{username:login,email,password}:{login,password})});
+  const data=await response.json().catch(()=>({error:'O servidor retornou uma resposta inválida.'}));
+  if(!response.ok)throw new Error(data.error||('Falha na autenticação (HTTP '+response.status+').'));
+  if(!data.token||!data.player)throw new Error('O servidor não confirmou a sessão. Tente novamente.');
+  authToken=data.token;localStorage.setItem('formulaBr1Token',authToken);
+  document.querySelector('#pilotName').value=data.player.username;
+  status.textContent=(register?'Conta criada e conectada: ':'Login realizado: ')+data.player.username;
+  status.className='connected';connectSocket();
+ }catch(error){status.textContent=error.message||'Não foi possível conectar. Verifique sua internet e tente novamente.';status.className='error';}
+ finally{button.disabled=false;button.textContent=register?'CRIAR MINHA CONTA':'ENTRAR NA CONTA';}
+});
 document.querySelector('#rankingButton').onclick=async()=>{const panel=document.querySelector('#leaderboardPanel');panel.hidden=false;panel.textContent='Carregando classificação…';try{const r=await fetch(serverUrl+'/api/leaderboard');const d=await r.json();if(!r.ok)throw new Error('Não foi possível carregar o ranking.');panel.innerHTML='<strong>TOP 100 PILOTOS</strong>'+d.ranking.slice(0,10).map((p,i)=>'<div class=\"rankRow\"><span>'+String(i+1).padStart(2,'0')+' · '+p.username+'</span><b>'+p.points+' PTS</b></div>').join('');}catch(e){panel.textContent=e.message;}};
 document.querySelector('#engineer').onclick=async()=>{const box=document.querySelector('#engineerAdvice');box.textContent='Consultando engenheiro de corrida…';try{const r=await fetch(serverUrl+'/api/engineer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:Math.round(speed),lap:document.querySelector('#lap').textContent,elapsed:Number(elapsed.toFixed(1)),position:Number(document.querySelector('#position').textContent)})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Engenheiro indisponível');box.textContent=d.advice;}catch(e){box.textContent=e.message;}};
 document.querySelector('#onlineStart').onclick=()=>{
