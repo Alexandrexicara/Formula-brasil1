@@ -107,7 +107,7 @@ if(!serverUrl){
   onlineStatus.textContent='SERVIDOR MULTIPLAYER SERÁ CONECTADO QUANDO O RENDER FOR CONFIGURADO.';
 }
 const aiColors=[0x174d9b,0xffc928,0xeeeeee,0x16a06b,0x8a42bd];
-for(let i=0;i<5;i++){const model=car.clone(true);model.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&o.material!==rubber){o.material=o.material.clone();o.material.color.setHex(aiColors[i]);}});scene.add(model);aiDrivers.push({model,progress:(.02+(i+1)*.105)%1,speed:220+i*7,laps:0,finished:false});}
+for(let i=0;i<5;i++){const model=car.clone(true);model.traverse(o=>{if(o.isMesh&&o.material){o.material=Array.isArray(o.material)?o.material.map(m=>{const cloned=m.clone();if(cloned.color)cloned.color.setHex(aiColors[i]);return cloned;}):o.material.clone();if(!Array.isArray(o.material)&&o.material.color)o.material.color.setHex(aiColors[i]);}});scene.add(model);aiDrivers.push({model,progress:(.02+(i+1)*.105)%1,speed:220+i*7,laps:0,finished:false});}
 function trackPoint(t,offset=0){const u=safeTrackU(t),p=sampleTrackPoint(u),tan=sampleTrackTangent(u),side=new THREE.Vector3(-tan.z,0,tan.x).normalize();return p.addScaledVector(side,offset);}
 aiDrivers.forEach(a=>{const p=trackPoint(a.progress);a.model.position.set(p.x,.08,p.z);const t=sampleTrackTangent(a.progress);a.model.rotation.y=Math.atan2(-t.x,-t.z);});
 loadFormulaModel();
