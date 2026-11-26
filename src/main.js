@@ -38,7 +38,8 @@ for(let x of [-.37,.37]){let glove=new THREE.Mesh(new THREE.SphereGeometry(.13,1
 const dash=box(cockpit,new THREE.MeshStandardMaterial({color:0x06090e,emissive:0x09213b,emissiveIntensity:.8}),0,1.05,-.05,.68,.25,.12);dash.rotation.x=-.25;
 const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.48,-.25);car.add(cockpitCam);
 const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add(externalCam);
-let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1,laps=0,lapElapsed=0,bestLap=Infinity,lateral=0,finished=false;\nconst TOTAL_LAPS=3,aiDrivers=[];
+let speed=0,steer=0,heading=0,progress=.02,started=false,paused=false,external=false,elapsed=0,gear=1,laps=0,lapElapsed=0,bestLap=Infinity,lateral=0,finished=false;
+const TOTAL_LAPS=3,aiDrivers=[];
 // Posiciona o carro na linha de largada antes de abrir o treino.
 const initialPoint=curve.getPointAt(progress);const initialTangent=curve.getTangentAt(progress);car.position.set(initialPoint.x,.08,initialPoint.z);car.rotation.y=Math.atan2(-initialTangent.x,-initialTangent.z);
 const onlineStatus=document.querySelector('#onlineStatus');
@@ -63,7 +64,9 @@ if(!serverUrl){
 }
 const aiColors=[0x174d9b,0xffc928,0xeeeeee,0x16a06b,0x8a42bd];
 for(let i=0;i<5;i++){const model=car.clone(true);model.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&o.material!==rubber){o.material=o.material.clone();o.material.color.setHex(aiColors[i]);}});scene.add(model);aiDrivers.push({model,progress:(.02+(i+1)*.105)%1,speed:220+i*7,laps:0,finished:false});}
-function trackPoint(t,offset=0){const p=curve.getPointAt((t+1)%1),tan=curve.getTangentAt((t+1)%1),side=new THREE.Vector3(-tan.z,0,tan.x).normalize();return p.addScaledVector(side,offset);}\naiDrivers.forEach(a=>{const p=trackPoint(a.progress);a.model.position.set(p.x,.08,p.z);const t=curve.getTangentAt(a.progress);a.model.rotation.y=Math.atan2(-t.x,-t.z);});\nconst trackSelect=document.querySelector('#trackSelect');if(trackSelect){trackSelect.value=selectedTrack;trackSelect.onchange=()=>{location.search='?track='+encodeURIComponent(trackSelect.value);};}
+function trackPoint(t,offset=0){const p=curve.getPointAt((t+1)%1),tan=curve.getTangentAt((t+1)%1),side=new THREE.Vector3(-tan.z,0,tan.x).normalize();return p.addScaledVector(side,offset);}
+aiDrivers.forEach(a=>{const p=trackPoint(a.progress);a.model.position.set(p.x,.08,p.z);const t=curve.getTangentAt(a.progress);a.model.rotation.y=Math.atan2(-t.x,-t.z);});
+const trackSelect=document.querySelector('#trackSelect');if(trackSelect){trackSelect.value=selectedTrack;trackSelect.onchange=()=>{location.search='?track='+encodeURIComponent(trackSelect.value);};}
 function startRace(){started=true;finished=false;paused=false;elapsed=0;lapElapsed=0;bestLap=Infinity;laps=0;progress=.02;lateral=0;speed=0;aiDrivers.forEach((a,i)=>{a.progress=(.02+(i+1)*.105)%1;a.laps=0;a.finished=false;});document.querySelector('#startPanel').style.display='none';document.querySelector('#loading').style.display='none';document.querySelector('#session').textContent='CORRIDA · 3 VOLTAS · '+(trackNames[selectedTrack]||'LAS VEGAS');document.querySelector('#lap').textContent='0/3';}
 document.querySelector('#start').onclick=startRace;
 const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='c')external=!external;if(e.key==='Escape'&&started){paused=!paused;document.querySelector('#pause').hidden=!paused;}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
@@ -78,7 +81,8 @@ document.querySelector('#authSubmit').onclick=async()=>{
  status.textContent='Conectando…';
  try{const response=await fetch(serverUrl+'/api/auth/'+(authMode==='register'?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Falha na autenticação.');authToken=data.token;localStorage.setItem('formulaBr1Token',authToken);document.querySelector('#pilotName').value=data.player.username;status.textContent='Conta conectada: '+data.player.username;status.className='connected';connectSocket();}catch(e){status.textContent=e.message;status.className='error';}
 };
-document.querySelector('#engineer').onclick=async()=>{const box=document.querySelector('#engineerAdvice');box.textContent='Consultando engenheiro de corrida…';try{const r=await fetch(serverUrl+'/api/engineer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:Math.round(speed),lap:document.querySelector('#lap').textContent,elapsed:Number(elapsed.toFixed(1)),position:Number(document.querySelector('#position').textContent)})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Engenheiro indisponível');box.textContent=d.advice;}catch(e){box.textContent=e.message;}};\ndocument.querySelector('#onlineStart').onclick=()=>{
+document.querySelector('#engineer').onclick=async()=>{const box=document.querySelector('#engineerAdvice');box.textContent='Consultando engenheiro de corrida…';try{const r=await fetch(serverUrl+'/api/engineer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:Math.round(speed),lap:document.querySelector('#lap').textContent,elapsed:Number(elapsed.toFixed(1)),position:Number(document.querySelector('#position').textContent)})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Engenheiro indisponível');box.textContent=d.advice;}catch(e){box.textContent=e.message;}};
+document.querySelector('#onlineStart').onclick=()=>{
  if(!serverUrl){onlineStatus.textContent='O GRID ONLINE ESTÁ PREPARADO. FALTA PUBLICAR O SERVIDOR NO RENDER.';onlineStatus.className='error';return;}
  if(!authToken){document.querySelector('#authStatus').textContent='Entre ou crie uma conta antes de entrar no grid.';return;}
  if(!socket?.connected){onlineStatus.textContent='CONECTANDO AO SERVIDOR…';if(!socket)connectSocket();else socket.connect();return;}
