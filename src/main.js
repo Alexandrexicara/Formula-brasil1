@@ -165,7 +165,7 @@ const remoteCars=new Map();
 function addRemote(id,name){if(remoteCars.has(id))return;const model=car.clone(true);model.scale.setScalar(.98);model.traverse(o=>{if(o.isLight)o.visible=false;});scene.add(model);remoteCars.set(id,{model,name});}
 function updateRemote(data){addRemote(data.id,data.name);const r=remoteCars.get(data.id);r.model.position.set(data.x,.08,data.z);r.model.rotation.y=data.rotation;}
 function syncRemotePlayers(room){const ids=new Set(room.players.map(p=>p.id));for(const [id,r] of remoteCars){if(!ids.has(id)){scene.remove(r.model);remoteCars.delete(id);}}for(const p of room.players)if(p.id!==socket?.id)addRemote(p.id,p.name);}
-function connectSocket(){if(!serverUrl||!authToken)return;socket?.disconnect();socket=io(serverUrl,{auth:{token:authToken},transports:['websocket','polling'],timeout:8000,reconnection:true});
+function connectSocket(){if(!serverUrl||!authToken)return;socket?.disconnect();socket=io(serverUrl,{auth:{token:authToken},transports:['polling','websocket'],timeout:8000,reconnection:true});
   socket.on('connect',()=>{onlineStatus.textContent='SERVIDOR CONECTADO · PRONTO PARA ENTRAR NA FILA';onlineStatus.className='connected';});
   socket.on('connect_error',()=>{onlineStatus.textContent='NÃO FOI POSSÍVEL CONECTAR AO SERVIDOR. O TREINO LIVRE CONTINUA DISPONÍVEL.';onlineStatus.className='error';});
   socket.on('grid:joined',data=>{onlineRoom=data.room;syncRemotePlayers(data.room);onlineStatus.textContent='GRID '+data.room.id+' · '+data.room.players.length+'/20 PILOTOS';});
