@@ -20,3 +20,7 @@
 .authBox .authSubmit{margin:8px 0 0;padding:11px 15px;clip-path:none;font-size:9px}
 #authStatus{margin-top:9px;color:#aeb8c7;font-size:10px;line-height:1.5}
 #authStatus.connected{color:#7ce4a5}#authStatus.error{color:#ff7c83}
+
+.engineerButton{pointer-events:auto;margin-top:10px;padding:10px 14px;background:#152b3c;border:1px solid #4d86ad;clip-path:none;font-size:9px}
+#engineerAdvice{max-width:340px;margin-top:8px;padding:9px 11px;background:#07111dcc;border-left:2px solid #49a5d8;color:#dce8f5;font-size:10px;line-height:1.5;pointer-events:none}
+@media(max-width:650px){#engineerAdvice{max-width:80vw;font-size:9px}.engineerButton{font-size:8px;padding:9px 10px}}
