@@ -99,12 +99,12 @@ document.querySelector('#authForm').addEventListener('submit',async event=>{
  const register=authMode==='register';
  if(!serverUrl){status.textContent='Servidor não configurado. Tente novamente em instantes.';status.className='error';return;}
  if(login.length<3){status.textContent='Digite um nome de piloto com pelo menos 3 caracteres.';status.className='error';return;}
- if(register&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){status.textContent='Digite um endereço de e-mail válido.';status.className='error';return;}
+ if(register&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status.textContent='Digite um endereço de e-mail válido.';status.className='error';return;}
  if(password.length<8){status.textContent='A senha precisa ter pelo menos 8 caracteres.';status.className='error';return;}
  button.disabled=true;button.textContent=register?'CRIANDO CONTA…':'ENTRANDO…';
  status.textContent='Conectando ao servidor…';status.className='';
  try{
-  const response=await fetch(serverUrl.replace(/\\/+$/,'')+'/api/auth/'+(register?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(register?{username:login,email,password}:{login,password})});
+  const response=await fetch((serverUrl.endsWith('/')?serverUrl.slice(0,-1):serverUrl)+'/api/auth/'+(register?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(register?{username:login,email,password}:{login,password})});
   const data=await response.json().catch(()=>({error:'O servidor retornou uma resposta inválida.'}));
   if(!response.ok)throw new Error(data.error||('Falha na autenticação (HTTP '+response.status+').'));
   if(!data.token||!data.player)throw new Error('O servidor não confirmou a sessão. Tente novamente.');
