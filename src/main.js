@@ -11,7 +11,7 @@ function recordBug(type,message,source=''){
  const count=document.querySelector('#bugCount');if(count)count.textContent=String(bugEvents.length);
 }
 window.addEventListener('error',e=>recordBug('JS ERROR',e.message,e.filename+':'+e.lineno));
-window.addEventListener('unhandledrejection',e=>recordBug('PROMISE',e.reason?.message||e.reason));
+window.addEventListener('unhandledrejection',e=>recordBug('PROMISE',e.reason?.message||e.reason));\nconst nativeConsoleError=console.error.bind(console);console.error=(...args)=>{nativeConsoleError(...args);recordBug('CONSOLE',args.map(v=>v?.message||String(v)).join(' '));};
 const app=document.querySelector('#app');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x080d18);scene.fog=new THREE.Fog(0x080d18,90,420);
 const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.1,1000);
@@ -64,7 +64,7 @@ const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.32,-.62);car.a
 const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add(externalCam);
 let carAssetLoaded=false;
 const formulaWheelMeshes=[];
-let audioContext=null,engineOsc=null,engineGain=null,engineFilter=null,brakeNoise=null,brakeGain=null;
+let audioContext=null,engineOsc=null,engineGain=null,engineFilter=null,brakeNoise=null,brakeGain=null,wheelSpin=0;
 const carAssetUrls=[
  'https://tevy.dev/models/formula-car/v1/lod0.glb',
  'https://cdn.3dassets.dev/assets/15179/v1/model.glb'
@@ -107,8 +107,8 @@ function updateRaceAudio(accelerating,braking){
  const now=audioContext.currentTime,rpm=950+speed*37+(accelerating?800:0);
  engineOsc.frequency.setTargetAtTime(Math.max(45,rpm/12),now,.06);
  engineFilter.frequency.setTargetAtTime(400+rpm*.55,now,.08);
- engineGain.gain.setTargetAtTime(started&&!paused?.075:.0001,now,.08);
- brakeGain.gain.setTargetAtTime(braking&&speed>15?.055:.0001,now,.05);
+ engineGain.gain.setTargetAtTime(started&&!paused ? .075 : .0001,now,.08);
+ brakeGain.gain.setTargetAtTime(braking&&speed>15 ? .055 : .0001,now,.05);
  if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
 }
 
@@ -178,7 +178,8 @@ function setAuthMode(mode){
 document.querySelector('#loginTab').addEventListener('click',()=>setAuthMode('login'));
 document.querySelector('#registerTab').addEventListener('click',()=>setAuthMode('register'));
 setAuthMode('login');
-document.querySelector('#authForm').addEventListener('submit',async event=>{\n recordBug('AUTH','Tentativa de '+(authMode==='register'?'cadastro':'login'));
+document.querySelector('#authForm').addEventListener('submit',async event=>{
+ recordBug('AUTH','Tentativa de '+(authMode==='register'?'cadastro':'login'));
  event.preventDefault();
  const status=document.querySelector('#authStatus');
  const button=document.querySelector('#authSubmit');
@@ -204,7 +205,9 @@ document.querySelector('#authForm').addEventListener('submit',async event=>{\n r
  }catch(error){recordBug('AUTH ERROR',error.message);status.textContent=error.message||'Não foi possível conectar. Verifique sua internet e tente novamente.';status.className='error';}
  finally{button.disabled=false;button.textContent=register?'CRIAR MINHA CONTA':'ENTRAR NA CONTA';}
 });
-document.querySelector('#bugTag').onclick=()=>{const p=document.querySelector('#bugPanel');p.hidden=!p.hidden;};\ndocument.querySelector('#copyBugReport').onclick=async()=>{const report=JSON.stringify({app:'Formula Brasil 1',url:location.href,ua:navigator.userAgent,events:bugEvents},null,2);try{await navigator.clipboard.writeText(report);document.querySelector('#bugCopyStatus').textContent='Relatório copiado.';}catch(e){document.querySelector('#bugCopyStatus').textContent=report.slice(0,3000);}};\ndocument.querySelector('#rankingButton').onclick=async()=>{const panel=document.querySelector('#leaderboardPanel');panel.hidden=false;panel.textContent='Carregando classificação…';try{const r=await fetch(serverUrl+'/api/leaderboard');const d=await r.json();if(!r.ok)throw new Error('Não foi possível carregar o ranking.');panel.innerHTML='<strong>TOP 100 PILOTOS</strong>'+d.ranking.slice(0,10).map((p,i)=>'<div class=\"rankRow\"><span>'+String(i+1).padStart(2,'0')+' · '+p.username+'</span><b>'+p.points+' PTS</b></div>').join('');}catch(e){panel.textContent=e.message;}};
+document.querySelector('#bugTag').onclick=()=>{const p=document.querySelector('#bugPanel');p.hidden=!p.hidden;};
+document.querySelector('#copyBugReport').onclick=async()=>{const report=JSON.stringify({app:'Formula Brasil 1',url:location.href,ua:navigator.userAgent,events:bugEvents},null,2);try{await navigator.clipboard.writeText(report);document.querySelector('#bugCopyStatus').textContent='Relatório copiado.';}catch(e){document.querySelector('#bugCopyStatus').textContent=report.slice(0,3000);}};
+document.querySelector('#rankingButton').onclick=async()=>{const panel=document.querySelector('#leaderboardPanel');panel.hidden=false;panel.textContent='Carregando classificação…';try{const r=await fetch(serverUrl+'/api/leaderboard');const d=await r.json();if(!r.ok)throw new Error('Não foi possível carregar o ranking.');panel.innerHTML='<strong>TOP 100 PILOTOS</strong>'+d.ranking.slice(0,10).map((p,i)=>'<div class=\"rankRow\"><span>'+String(i+1).padStart(2,'0')+' · '+p.username+'</span><b>'+p.points+' PTS</b></div>').join('');}catch(e){panel.textContent=e.message;}};
 document.querySelector('#engineer').onclick=async()=>{const box=document.querySelector('#engineerAdvice');box.textContent='Consultando engenheiro de corrida…';try{const r=await fetch(serverUrl+'/api/engineer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:Math.round(speed),lap:document.querySelector('#lap').textContent,elapsed:Number(elapsed.toFixed(1)),position:Number(document.querySelector('#position').textContent)})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Engenheiro indisponível');box.textContent=d.advice;}catch(e){box.textContent=e.message;}};
 document.querySelector('#onlineStart').onclick=()=>{
  if(!serverUrl){onlineStatus.textContent='O GRID ONLINE ESTÁ PREPARADO. FALTA PUBLICAR O SERVIDOR NO RENDER.';onlineStatus.className='error';return;}
@@ -217,7 +220,7 @@ let last=performance.now();function animate(now){requestAnimationFrame(animate);
 if(started&&!paused&&!finished){elapsed+=dt;lapElapsed+=dt;const accel=keys.w||keys.arrowup,brake=keys.s||keys.arrowdown,left=keys.a||keys.arrowleft,right=keys.d||keys.arrowright;updateRaceAudio(accel,brake);speed=THREE.MathUtils.clamp(speed+(accel?78:0)*dt-(brake?145:0)*dt-(accel?0:12)*dt,0,350);const target=(left?-1:0)+(right?1:0);steer=THREE.MathUtils.damp(steer,target,4.2,dt);lateral=THREE.MathUtils.clamp(lateral+steer*(speed/3.6)*dt*.72,-13,13);const previous=progress;progress=safeTrackU(progress+(speed/3.6)*dt/(Math.max(1,Number.isFinite(trackLength)?trackLength:1)*10));const p=trackPoint(progress,lateral),t=sampleTrackTangent(progress);heading=Math.atan2(-t.x,-t.z)+steer*.22;car.position.set(p.x,.08,p.z);car.rotation.y=heading;if(Math.abs(lateral)>8.3){speed=Math.max(45,speed-55*dt);document.querySelector('#session').textContent='FORA DA PISTA · PERDA DE ADERÊNCIA';}if(progress<previous){laps++;bestLap=Math.min(bestLap,lapElapsed);lapElapsed=0;document.querySelector('#lap').textContent=gameMode==='race'?Math.min(laps,TOTAL_LAPS)+'/3':laps+'/∞';if(gameMode==='race'&&laps>=TOTAL_LAPS){finished=true;speed=0;document.querySelector('#session').textContent='BANDEIRADA · '+elapsed.toFixed(2)+'s';if(socket?.connected&&onlineRoom?.status==='racing')socket.emit('race:finish-player',{totalTimeMs:Math.round(elapsed*1000),bestLapMs:Math.round(bestLap*1000)});}}if(socket?.connected&&onlineRoom?.status==='racing')socket.volatile.emit('player:state',{x:p.x,y:.08,z:p.z,rotation:heading,speed});
 for(const ai of aiDrivers){if(ai.finished)continue;const old=ai.progress;ai.progress=safeTrackU(ai.progress+(ai.speed/3.6)*dt/(Math.max(1,Number.isFinite(trackLength)?trackLength:1)*10));const ap=trackPoint(ai.progress,Math.sin(ai.progress*18)*1.2);ai.model.position.set(ap.x,.08,ap.z);const at=sampleTrackTangent(ai.progress);ai.model.rotation.y=Math.atan2(-at.x,-at.z);if(ai.progress<old)ai.laps++;if(gameMode==='race'&&ai.laps>=TOTAL_LAPS)ai.finished=true;}
 gear=speed<5?1:Math.min(8,Math.max(1,Math.floor(speed/43)+1));}
-const activeCam=external?externalCam:cockpitCam,wp=activeCam.getWorldPosition(new THREE.Vector3()),forward=new THREE.Vector3(0,0,-1).applyQuaternion(car.quaternion),look=external?car.position.clone().add(new THREE.Vector3(0,.8,0)):wp.clone().addScaledVector(forward,25).add(new THREE.Vector3(0,-.05,0));camera.position.copy(wp);camera.lookAt(look);for(const w of formulaWheelMeshes){w.mesh.rotation.x=w.baseX+speed*dt*.075;if(w.front)w.mesh.rotation.y=w.baseY-steer*.28;}document.querySelector('#speed').textContent=Math.round(speed);document.querySelector('#gear').textContent=started?gear:'N';document.querySelector('#clock').textContent=new Date(elapsed*1000).toISOString().slice(14,23);document.querySelector('#cameraLabel').textContent=external?'CÂMERA EXTERNA':'CÂMERA COCKPIT';document.querySelector('.mapLabel').textContent='CIRCUITO '+(trackNames[selectedTrack]||'LAS VEGAS');document.querySelector('#position').textContent=1+aiDrivers.filter(a=>(a.laps+a.progress)>(laps+progress)).length;drawMap();renderer.render(scene,camera);}
+const activeCam=external?externalCam:cockpitCam,wp=activeCam.getWorldPosition(new THREE.Vector3()),forward=new THREE.Vector3(0,0,-1).applyQuaternion(car.quaternion),look=external?car.position.clone().add(new THREE.Vector3(0,.8,0)):wp.clone().addScaledVector(forward,25).add(new THREE.Vector3(0,-.05,0));camera.position.copy(wp);camera.lookAt(look);wheelSpin+=speed*dt*.075;for(const w of formulaWheelMeshes){w.mesh.rotation.x=w.baseX+wheelSpin;if(w.front)w.mesh.rotation.y=w.baseY-steer*.28;}steering.rotation.z=-steer*.62;document.querySelector('#speed').textContent=Math.round(speed);document.querySelector('#gear').textContent=started?gear:'N';document.querySelector('#clock').textContent=new Date(elapsed*1000).toISOString().slice(14,23);document.querySelector('#cameraLabel').textContent=external?'CÂMERA EXTERNA':'CÂMERA COCKPIT';document.querySelector('.mapLabel').textContent='CIRCUITO '+(trackNames[selectedTrack]||'LAS VEGAS');document.querySelector('#position').textContent=1+aiDrivers.filter(a=>(a.laps+a.progress)>(laps+progress)).length;drawMap();renderer.render(scene,camera);}
 requestAnimationFrame(animate);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 document.querySelector('#loading').style.display='none';
