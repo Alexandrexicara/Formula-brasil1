@@ -74,8 +74,21 @@ displayCtx.fillStyle='#f4f7ff';displayCtx.font='bold 28px Arial';displayCtx.fill
 const displayTexture=new THREE.CanvasTexture(displayCanvas);
 const screen=new THREE.Mesh(new THREE.PlaneGeometry(.58,.26),new THREE.MeshBasicMaterial({map:displayTexture}));
 screen.position.set(0,1.16,-.69);cockpit.add(screen);
-for(const x of [-.31,.31]){cockpitBar([x*1.95,.72,-.24],[x,1.03,-.83],.075,new THREE.MeshStandardMaterial({color:0x202632,roughness:.9}));const glove=new THREE.Mesh(new THREE.SphereGeometry(.105,18,14),new THREE.MeshStandardMaterial({color:0x171c25,roughness:.9}));glove.position.set(x,1.08,-.91);cockpit.add(glove);}
-const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.32,.42);car.add(cockpitCam);
+// Antebraços com mangas de corrida, punhos e luvas apoiadas nas laterais do volante.
+const sleeveMat=new THREE.MeshStandardMaterial({color:0xb51e2b,roughness:.72});
+const gloveMat=new THREE.MeshStandardMaterial({color:0x171c25,roughness:.88});
+const cuffMat=new THREE.MeshStandardMaterial({color:0xe8e9ec,metalness:.15,roughness:.55});
+function cockpitLimb(a,b,r1,r2,mat){const va=new THREE.Vector3(...a),vb=new THREE.Vector3(...b),d=vb.clone().sub(va);const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,d.length(),16),mat);mesh.position.copy(va).add(vb).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());mesh.castShadow=true;cockpit.add(mesh);return mesh;}
+for(const side of [-1,1]){
+ const shoulder=[side*.72,.77,-.22],elbow=[side*.48,.91,-.62],wrist=[side*.29,1.055,-.83];
+ cockpitLimb(shoulder,elbow,.16,.125,sleeveMat);
+ cockpitLimb(elbow,wrist,.125,.09,gloveMat);
+ const cuff=cockpitLimb([side*.34,1.015,-.78],[side*.30,1.045,-.84],.098,.098,cuffMat);
+ const glove=new THREE.Mesh(new THREE.SphereGeometry(.105,20,16),gloveMat);glove.position.set(side*.285,1.075,-.91);glove.scale.set(1.08,.82,1.22);glove.castShadow=true;cockpit.add(glove);
+ for(let finger=0;finger<4;finger++){const f=new THREE.Mesh(new THREE.CapsuleGeometry(.018,.065,4,8),gloveMat);f.position.set(side*(.245+finger*.025),1.045,-.985);f.rotation.z=side*.18;cockpit.add(f);}
+ const thumb=new THREE.Mesh(new THREE.CapsuleGeometry(.022,.055,4,8),gloveMat);thumb.position.set(side*.20,1.09,-.91);thumb.rotation.z=side*.8;cockpit.add(thumb);
+}
+const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.34,.48);car.add(cockpitCam);
 const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add(externalCam);
 let carAssetLoaded=false;
 const formulaWheelMeshes=[],formulaSteeringMeshes=[];
