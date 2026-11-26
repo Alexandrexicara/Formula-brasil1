@@ -52,3 +52,38 @@
  .authTabs .authTab{min-height:42px}
  .authBox .authSubmit{min-height:44px}
 }
+
+
+/* Painel de cadastro/login destacado no lado direito */
+#startPanel .authBox{
+  position:fixed;
+  z-index:100;
+  top:50%;
+  right:clamp(18px,5vw,72px);
+  left:auto;
+  transform:translateY(-50%);
+  width:min(360px, calc(100vw - 36px));
+  max-width:360px;
+  max-height:88vh;
+  overflow-y:auto;
+  margin:0;
+  box-shadow:0 18px 55px #000b;
+  background:rgba(7,12,21,.96);
+  border:1px solid #596779;
+}
+#startPanel .authBox form{width:100%}
+#startPanel .authBox input{min-height:44px}
+@media(max-width:650px){
+  #startPanel .authBox{
+    position:fixed;
+    top:50%;
+    right:4vw;
+    left:auto;
+    transform:translateY(-50%);
+    width:min(360px,92vw);
+    max-width:92vw;
+    max-height:84dvh;
+    overflow-y:auto;
+    margin:0;
+  }
+}
