@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  VITE_SERVER_URL = "https://formula-brasil1.onrender.com"
 
 [[headers]]
   for = "/assets/*"
