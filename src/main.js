@@ -3,6 +3,15 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { io } from 'socket.io-client';
 import './style.css';
 
+const bugEvents=[];
+function recordBug(type,message,source=''){
+ const entry={time:new Date().toISOString(),type:String(type),message:String(message||'').slice(0,500),source:String(source||'').slice(0,240)};
+ bugEvents.push(entry);if(bugEvents.length>60)bugEvents.shift();
+ const list=document.querySelector('#bugList');if(list){const row=document.createElement('div');row.className='bugEntry';row.textContent=entry.time.slice(11,19)+' · '+entry.type+' · '+entry.message;list.prepend(row);}
+ const count=document.querySelector('#bugCount');if(count)count.textContent=String(bugEvents.length);
+}
+window.addEventListener('error',e=>recordBug('JS ERROR',e.message,e.filename+':'+e.lineno));
+window.addEventListener('unhandledrejection',e=>recordBug('PROMISE',e.reason?.message||e.reason));
 const app=document.querySelector('#app');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x080d18);scene.fog=new THREE.Fog(0x080d18,90,420);
 const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.1,1000);
@@ -53,7 +62,9 @@ screen.position.set(0,1.16,-.108);cockpit.add(screen);
 for(const x of [-.34,.34]){const glove=new THREE.Mesh(new THREE.SphereGeometry(.12,18,14),new THREE.MeshStandardMaterial({color:0x171c25,roughness:.9}));glove.position.set(x,1.04,-.42);cockpit.add(glove);}
 const cockpitCam=new THREE.Object3D();cockpitCam.position.set(0,1.32,-.62);car.add(cockpitCam);
 const externalCam=new THREE.Object3D();externalCam.position.set(4,3.1,7);car.add(externalCam);
-let carAssetLoaded=false;\nconst formulaWheelMeshes=[];\nlet audioContext=null,engineOsc=null,engineGain=null,engineFilter=null,brakeNoise=null,brakeGain=null;
+let carAssetLoaded=false;
+const formulaWheelMeshes=[];
+let audioContext=null,engineOsc=null,engineGain=null,engineFilter=null,brakeNoise=null,brakeGain=null;
 const carAssetUrls=[
  'https://tevy.dev/models/formula-car/v1/lod0.glb',
  'https://cdn.3dassets.dev/assets/15179/v1/model.glb'
@@ -67,9 +78,40 @@ function fitFormulaModel(root){
  root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material=o.material.clone();o.material.roughness=Math.min(.82,Math.max(.2,o.material.roughness??.45));}}});
 }
 function attachFormulaModel(target,template){
- const visual=template.clone(true);visual.traverse(o=>{if(o.isMesh&&o.material)o.material=o.material.clone();});
+ const visual=template.clone(true);
+ visual.traverse(o=>{
+  if(!o.isMesh)return;
+  if(o.material)o.material=o.material.clone();
+  const nm=(o.name||'').toLowerCase();
+  if(/wheel|tyre|tire|rim/.test(nm))formulaWheelMeshes.push({mesh:o,front:/front|fl|fr/.test(nm),baseX:o.rotation.x,baseY:o.rotation.y});
+ });
  target.add(visual);return visual;
 }
+function initRaceAudio(){
+ if(audioContext)return;
+ const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;
+ audioContext=new AudioCtx();
+ engineOsc=audioContext.createOscillator();engineOsc.type='sawtooth';
+ engineFilter=audioContext.createBiquadFilter();engineFilter.type='lowpass';engineFilter.frequency.value=520;
+ engineGain=audioContext.createGain();engineGain.gain.value=.0001;
+ engineOsc.connect(engineFilter).connect(engineGain).connect(audioContext.destination);engineOsc.start();
+ const buffer=audioContext.createBuffer(1,audioContext.sampleRate*2,audioContext.sampleRate),data=buffer.getChannelData(0);
+ for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.32;
+ brakeNoise=audioContext.createBufferSource();brakeNoise.buffer=buffer;brakeNoise.loop=true;
+ const brakeFilter=audioContext.createBiquadFilter();brakeFilter.type='bandpass';brakeFilter.frequency.value=1450;
+ brakeGain=audioContext.createGain();brakeGain.gain.value=.0001;
+ brakeNoise.connect(brakeFilter).connect(brakeGain).connect(audioContext.destination);brakeNoise.start();
+}
+function updateRaceAudio(accelerating,braking){
+ if(!audioContext||!engineOsc)return;
+ const now=audioContext.currentTime,rpm=950+speed*37+(accelerating?800:0);
+ engineOsc.frequency.setTargetAtTime(Math.max(45,rpm/12),now,.06);
+ engineFilter.frequency.setTargetAtTime(400+rpm*.55,now,.08);
+ engineGain.gain.setTargetAtTime(started&&!paused?.075:.0001,now,.08);
+ brakeGain.gain.setTargetAtTime(braking&&speed>15?.055:.0001,now,.05);
+ if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
+}
+
 function loadFormulaModel(index=0){
  if(index>=carAssetUrls.length){console.error('Nenhum modelo 3D de Fórmula foi carregado.');const status=document.querySelector('#loading');if(status){status.style.display='grid';status.textContent='ERRO AO CARREGAR O MODELO 3D DO CARRO';}return;}
  const loader=new GLTFLoader();
@@ -134,8 +176,9 @@ function setAuthMode(mode){
  document.querySelector('#authStatus').className='';
 }
 document.querySelector('#loginTab').addEventListener('click',()=>setAuthMode('login'));
-document.querySelector('#registerTab').addEventListener('click',()=>setAuthMode('register'));\nsetAuthMode('login');
-document.querySelector('#authForm').addEventListener('submit',async event=>{
+document.querySelector('#registerTab').addEventListener('click',()=>setAuthMode('register'));
+setAuthMode('login');
+document.querySelector('#authForm').addEventListener('submit',async event=>{\n recordBug('AUTH','Tentativa de '+(authMode==='register'?'cadastro':'login'));
  event.preventDefault();
  const status=document.querySelector('#authStatus');
  const button=document.querySelector('#authSubmit');
@@ -158,10 +201,10 @@ document.querySelector('#authForm').addEventListener('submit',async event=>{
   document.querySelector('#pilotName').value=data.player.username;
   status.textContent=(register?'Conta criada e conectada: ':'Login realizado: ')+data.player.username;
   status.className='connected';connectSocket();
- }catch(error){status.textContent=error.message||'Não foi possível conectar. Verifique sua internet e tente novamente.';status.className='error';}
+ }catch(error){recordBug('AUTH ERROR',error.message);status.textContent=error.message||'Não foi possível conectar. Verifique sua internet e tente novamente.';status.className='error';}
  finally{button.disabled=false;button.textContent=register?'CRIAR MINHA CONTA':'ENTRAR NA CONTA';}
 });
-document.querySelector('#rankingButton').onclick=async()=>{const panel=document.querySelector('#leaderboardPanel');panel.hidden=false;panel.textContent='Carregando classificação…';try{const r=await fetch(serverUrl+'/api/leaderboard');const d=await r.json();if(!r.ok)throw new Error('Não foi possível carregar o ranking.');panel.innerHTML='<strong>TOP 100 PILOTOS</strong>'+d.ranking.slice(0,10).map((p,i)=>'<div class=\"rankRow\"><span>'+String(i+1).padStart(2,'0')+' · '+p.username+'</span><b>'+p.points+' PTS</b></div>').join('');}catch(e){panel.textContent=e.message;}};
+document.querySelector('#bugTag').onclick=()=>{const p=document.querySelector('#bugPanel');p.hidden=!p.hidden;};\ndocument.querySelector('#copyBugReport').onclick=async()=>{const report=JSON.stringify({app:'Formula Brasil 1',url:location.href,ua:navigator.userAgent,events:bugEvents},null,2);try{await navigator.clipboard.writeText(report);document.querySelector('#bugCopyStatus').textContent='Relatório copiado.';}catch(e){document.querySelector('#bugCopyStatus').textContent=report.slice(0,3000);}};\ndocument.querySelector('#rankingButton').onclick=async()=>{const panel=document.querySelector('#leaderboardPanel');panel.hidden=false;panel.textContent='Carregando classificação…';try{const r=await fetch(serverUrl+'/api/leaderboard');const d=await r.json();if(!r.ok)throw new Error('Não foi possível carregar o ranking.');panel.innerHTML='<strong>TOP 100 PILOTOS</strong>'+d.ranking.slice(0,10).map((p,i)=>'<div class=\"rankRow\"><span>'+String(i+1).padStart(2,'0')+' · '+p.username+'</span><b>'+p.points+' PTS</b></div>').join('');}catch(e){panel.textContent=e.message;}};
 document.querySelector('#engineer').onclick=async()=>{const box=document.querySelector('#engineerAdvice');box.textContent='Consultando engenheiro de corrida…';try{const r=await fetch(serverUrl+'/api/engineer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({speed:Math.round(speed),lap:document.querySelector('#lap').textContent,elapsed:Number(elapsed.toFixed(1)),position:Number(document.querySelector('#position').textContent)})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Engenheiro indisponível');box.textContent=d.advice;}catch(e){box.textContent=e.message;}};
 document.querySelector('#onlineStart').onclick=()=>{
  if(!serverUrl){onlineStatus.textContent='O GRID ONLINE ESTÁ PREPARADO. FALTA PUBLICAR O SERVIDOR NO RENDER.';onlineStatus.className='error';return;}
