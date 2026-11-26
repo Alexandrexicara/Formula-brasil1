@@ -80,6 +80,8 @@ function setAuthMode(mode){
  email.hidden=!register;
  email.required=register;
  document.querySelector('#authLogin').placeholder=register?'Nome de piloto':'E-mail ou nome de piloto';
+ document.querySelector('#authLogin').maxLength=register?24:254;
+ document.querySelector('#authPassword').maxLength=72;
  document.querySelector('#authPassword').placeholder=register?'Crie uma senha (mínimo 8 caracteres)':'Sua senha';
  document.querySelector('#authSubmit').textContent=register?'CRIAR MINHA CONTA':'ENTRAR NA CONTA';
  document.querySelector('#loginTab').classList.toggle('active',!register);
@@ -100,7 +102,7 @@ document.querySelector('#authForm').addEventListener('submit',async event=>{
  if(!serverUrl){status.textContent='Servidor não configurado. Tente novamente em instantes.';status.className='error';return;}
  if(login.length<3){status.textContent='Digite um nome de piloto com pelo menos 3 caracteres.';status.className='error';return;}
  if(register&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){status.textContent='Digite um endereço de e-mail válido.';status.className='error';return;}
- if(password.length<8){status.textContent='A senha precisa ter pelo menos 8 caracteres.';status.className='error';return;}
+ if(password.length<8||password.length>72){status.textContent='A senha precisa ter entre 8 e 72 caracteres.';status.className='error';return;}
  button.disabled=true;button.textContent=register?'CRIANDO CONTA…':'ENTRANDO…';
  status.textContent='Conectando ao servidor…';status.className='';
  try{
