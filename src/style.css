@@ -32,3 +32,5 @@
 #leaderboardPanel[hidden]{display:none}
 .rankRow{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #263444}
 .rankRow b{color:#ff6971;white-space:nowrap}
+
+.raceButton{background:#253b55;border:1px solid #6a91b6;clip-path:none;padding:14px 16px;font-size:9px}
