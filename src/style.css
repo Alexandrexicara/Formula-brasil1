@@ -41,3 +41,13 @@
 .pedals{display:flex;gap:8px}.pedals button{margin:0;padding:12px 14px;min-width:78px;min-height:44px;clip-path:none;border:1px solid #8793a2;border-radius:5px;font-size:9px;letter-spacing:1px;touch-action:none;user-select:none}
 #throttleBtn{background:#126e43}#throttleBtn.active{background:#1ac878;box-shadow:0 0 18px #1ac87888}#brakeBtn{background:#8d2029}#brakeBtn.active{background:#ed3343;box-shadow:0 0 18px #ed334388}
 @media(max-width:650px){#driveControls{right:8px;bottom:95px;gap:8px}#steerPad{width:112px;height:112px}#steerWheel{width:82px;height:82px;border-width:8px}.pedals button{min-width:65px;padding:10px 8px;font-size:8px}}
+
+/* Desktop: mouse directly steers; mobile-only controls stay hidden. */
+#driveControls{display:none}
+#steerWheel{position:relative;width:112px;height:76px;border:8px solid #111820;border-radius:12px;background:linear-gradient(145deg,#26313e,#090d13);box-shadow:0 0 0 2px #8995a3,0 8px 22px #000b;transform:rotate(0deg);transition:transform .04s linear}
+.wheelSpoke{position:absolute;left:calc(50% - 4px);top:4px;width:8px;height:52px;background:#9aa4af;border-radius:3px}
+.wheelHub{position:absolute;left:calc(50% - 11px);top:calc(50% - 11px);width:22px;height:22px;border-radius:5px;background:#d12a35;border:2px solid #303946}
+.wheelButton{position:absolute;top:12px;width:10px;height:10px;border-radius:50%}.wheelButton.red{left:12px;background:#e43b45}.wheelButton.blue{right:12px;background:#25a9df}
+.pedals{display:flex;gap:8px}.pedals button{margin:0;padding:12px 14px;min-width:78px;min-height:44px;border:1px solid #8793a2;border-radius:5px;font-size:9px;letter-spacing:1px;touch-action:none;user-select:none}
+#throttleBtn{background:#126e43}#throttleBtn.active{background:#1ac878}#brakeBtn{background:#8d2029}#brakeBtn.active{background:#ed3343}
+@media(max-width:650px){#driveControls{display:flex;position:fixed;left:8px;right:8px;bottom:90px;z-index:30;align-items:flex-end;justify-content:space-between;pointer-events:auto;touch-action:none}#steerPad{display:flex;width:120px;height:100px;align-items:center;justify-content:center;touch-action:none;user-select:none}#steerWheel{width:104px;height:70px}.pedals{flex-direction:column;gap:9px}.pedals button{min-width:82px;min-height:52px;padding:10px 8px;font-size:9px}}
