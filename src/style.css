@@ -23,3 +23,9 @@
 #startPanel .authBox{scrollbar-width:thin;scrollbar-color:#e93643 #111925}
 #startPanel .authBox input{font-size:16px}
 @media(max-width:650px){#bugTag{bottom:58px;right:8px;padding:8px 10px}#bugPanel{right:8px;bottom:98px;max-height:50dvh}#startPanel{scrollbar-width:thin}#startPanel .authBox{touch-action:pan-y}}
+
+.assetCredit{display:block;margin-top:5px;color:#718094;font-size:9px;letter-spacing:.2px}
+#startPanel .authBox{right:clamp(14px,4vw,60px)}
+#startPanel .authBox input:focus{outline:2px solid #ff4652;outline-offset:1px}
+#startPanel .authBox .authSubmit:focus-visible,#startPanel .authTabs button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:650px){.assetCredit{font-size:8px}#startPanel .authBox{width:100%;max-width:100%;min-width:0}#startPanel .authBox form{min-width:0}#startPanel .authBox input{width:100%;max-width:100%}}
