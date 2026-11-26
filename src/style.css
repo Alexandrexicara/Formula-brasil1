@@ -44,3 +44,11 @@
 .authBox .authSubmit{width:100%;touch-action:manipulation}
 .authTabs .authTab{flex:1;touch-action:manipulation}
 .authSubmit:disabled{opacity:.65;cursor:wait}
+
+@media(max-width:650px){
+ #startPanel{top:4vh;left:5vw;width:90vw;max-width:450px;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;padding:0 0 18px;z-index:30}
+ #hud{z-index:10}
+ .authBox{width:100%}
+ .authTabs .authTab{min-height:42px}
+ .authBox .authSubmit{min-height:44px}
+}
