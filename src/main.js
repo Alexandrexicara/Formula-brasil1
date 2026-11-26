@@ -193,7 +193,7 @@ if(!serverUrl){
 const aiColors=[0x174d9b,0xffc928,0xeeeeee,0x16a06b,0x8a42bd];
 for(let i=0;i<5;i++){const model=car.clone(true);model.traverse(o=>{if(o.isMesh&&o.material){o.material=Array.isArray(o.material)?o.material.map(m=>{const cloned=m.clone();if(cloned.color)cloned.color.setHex(aiColors[i]);return cloned;}):o.material.clone();if(!Array.isArray(o.material)&&o.material.color)o.material.color.setHex(aiColors[i]);}});scene.add(model);aiDrivers.push({model,gridIndex:i+1,progress:.02,speed:0,targetSpeed:220+i*7,laps:0,finished:false});}
 function trackPoint(t,offset=0){const u=safeTrackU(t),p=sampleTrackPoint(u),tan=sampleTrackTangent(u),side=new THREE.Vector3(-tan.z,0,tan.x).normalize();return p.addScaledVector(side,offset);}
-function gridSlot(index){const row=Math.floor(index/2),side=index%2===0?-1:1;return {u:safeTrackU(.02-row*.0038),offset:side*2.35};}
+function gridSlot(index){const row=Math.floor(index/2),side=index%2===0?-1:1;return {u:safeTrackU(.02-row*.016),offset:side*2.35};}
 function placeOnGrid(obj,index){const slot=gridSlot(index),p=trackPoint(slot.u,slot.offset),t=sampleTrackTangent(slot.u);obj.position.set(p.x,.09,p.z);obj.rotation.y=Math.atan2(-t.x,-t.z);}
 aiDrivers.forEach((a,i)=>placeOnGrid(a.model,i+1));
 // Marcações permanentes do grid: seis vagas em duas colunas, com número e contorno.
