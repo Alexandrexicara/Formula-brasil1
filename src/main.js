@@ -112,8 +112,8 @@ function initRaceAudio(){
 function updateRaceAudio(accelerating,braking){
  if(!audioContext||!engineOsc)return;
  const now=audioContext.currentTime,rpm=950+speed*37+(accelerating?800:0);
- engineOsc.frequency.setTargetAtTime(Math.max(45,rpm/12),now,.06);
- engineFilter.frequency.setTargetAtTime(400+rpm*.55,now,.08);
+ engineOsc.frequency.setTargetAtTime(Math.max(18,rpm/60),now,.06);
+ engineFilter.frequency.setTargetAtTime(700+rpm*.25,now,.08);
  engineGain.gain.setTargetAtTime(started&&!paused ? .075 : .0001,now,.08);
  brakeGain.gain.setTargetAtTime(braking&&speed>15 ? .055 : .0001,now,.05);
  if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
