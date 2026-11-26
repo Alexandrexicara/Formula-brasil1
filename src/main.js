@@ -11,7 +11,8 @@ function recordBug(type,message,source=''){
  const count=document.querySelector('#bugCount');if(count)count.textContent=String(bugEvents.length);
 }
 window.addEventListener('error',e=>recordBug('JS ERROR',e.message,e.filename+':'+e.lineno));
-window.addEventListener('unhandledrejection',e=>recordBug('PROMISE',e.reason?.message||e.reason));\nconst nativeConsoleError=console.error.bind(console);console.error=(...args)=>{nativeConsoleError(...args);recordBug('CONSOLE',args.map(v=>v?.message||String(v)).join(' '));};
+window.addEventListener('unhandledrejection',e=>recordBug('PROMISE',e.reason?.message||e.reason));
+const nativeConsoleError=console.error.bind(console);console.error=(...args)=>{nativeConsoleError(...args);recordBug('CONSOLE',args.map(v=>v?.message||String(v)).join(' '));};
 const app=document.querySelector('#app');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x080d18);scene.fog=new THREE.Fog(0x080d18,90,420);
 const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.1,1000);
